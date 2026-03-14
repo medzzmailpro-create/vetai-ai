@@ -57,18 +57,20 @@ export default function AgendaPage({ setPage, setSelectedClientId, onOpenNewAppo
           .lte('start_time', `${selectedDate}T23:59:59`)
           .order('start_time', { ascending: true })
 
-        if (data) {
-          setAppointments(data.map((r: Record<string, unknown>) => ({
-            id: r.id as string,
-            start_time: r.start_time as string,
-            end_time: (r.end_time as string) ?? '',
-            status: (r.status as string) ?? 'pending',
-            type: (r.type as string) ?? '',
-            client_name: ((r.clients as Record<string, string> | null)?.name) ?? '—',
-            pet_name: ((r.pets as Record<string, string> | null)?.name) ?? '—',
-            pet_species: ((r.pets as Record<string, string> | null)?.species) ?? '',
-          })))
-        }
+          if (data) {
+            setAppointments(
+              data.map((r: Record<string, unknown>) => ({
+                id: r.id as string,
+                starts_at: (r.start_time as string) ?? '',
+                ends_at: (r.end_time as string) ?? '',
+                status: (r.status as string) ?? 'pending',
+                type: (r.type as string) ?? '',
+                client_name: ((r.clients as Record<string, string> | null)?.name) ?? '—',
+                pet_name: ((r.pets as Record<string, string> | null)?.name) ?? '—',
+                pet_species: ((r.pets as Record<string, string> | null)?.species) ?? '',
+              }))
+            )
+          }
       } catch { /* silent */ } finally {
         setLoading(false)
       }
@@ -165,8 +167,8 @@ export default function AgendaPage({ setPage, setSelectedClientId, onOpenNewAppo
         {!loading && filtered.map(a => {
           const color = STATUS_COLOR[a.status] ?? '#9E9E9B'
           const bg = STATUS_BG[a.status] ?? '#F5F5F3'
-          const time = new Date(a.start_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-          const endTime = a.end_time ? new Date(a.end_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ''
+          const time = new Date(a.starts_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+          const endTime = a.ends_at ? new Date(a.ends_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ''
           return (
             <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 8, marginBottom: 8, borderLeft: `4px solid ${color}`, background: bg, border: `1px solid ${color}33`, borderLeftWidth: 4 }}>
               <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 12, fontWeight: 700, color: '#5C5C59', minWidth: 60, flexShrink: 0 }}>

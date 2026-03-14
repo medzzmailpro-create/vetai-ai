@@ -161,20 +161,20 @@ export default function AgentsPage({
   }, [clinicId, isDemo])
 
   const toggleLiveAgent = async (agent: AgentRow) => {
-    const newVal = !agent.is_active
-
+    const newVal = !agent.active
+  
     setLiveAgents(prev =>
-      prev.map(a => (a.id === agent.id ? { ...a, is_active: newVal } : a))
+      prev.map(a => (a.id === agent.id ? { ...a, active: newVal } : a))
     )
-
+  
     try {
       await supabase
         .from('ai_agents')
-        .update({ is_active: newVal })
+        .update({ active: newVal })
         .eq('id', agent.id)
     } catch {
       setLiveAgents(prev =>
-        prev.map(a => (a.id === agent.id ? { ...a, is_active: agent.is_active } : a))
+        prev.map(a => (a.id === agent.id ? { ...a, active: agent.active } : a))
       )
     }
   }
@@ -196,7 +196,7 @@ export default function AgentsPage({
 
   const activeAgents = isDemo
     ? Object.values(agentStates).filter(Boolean).length
-    : liveAgents.filter(agent => agent.is_active).length
+    : liveAgents.filter(agent => agent.active).length
 
   const totalAgents = isDemo ? AGENTS.length : liveAgents.length
 
@@ -515,7 +515,7 @@ export default function AgentsPage({
                         width: 38,
                         height: 38,
                         borderRadius: 999,
-                        background: agent.is_active ? '#E8F5F3' : '#F5F5F3',
+                        background: agent.active ? '#E8F5F3' : '#F5F5F3',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -548,11 +548,11 @@ export default function AgentsPage({
                         <span
                           style={{
                             fontSize: 10,
-                            color: agent.is_active ? '#38A169' : '#9E9E9B',
+                            color: agent.active ? '#38A169' : '#9E9E9B',
                             fontWeight: 700,
                           }}
                         >
-                          {agent.is_active ? '● Actif' : '○ Inactif'}
+                          {agent.active ? '● Actif' : '○ Inactif'}
                         </span>
                       </div>
 
@@ -568,16 +568,16 @@ export default function AgentsPage({
                       style={{
                         padding: '5px 10px',
                         borderRadius: 999,
-                        border: `1px solid ${agent.is_active ? '#C53030' : '#0A7C6E'}`,
-                        background: agent.is_active ? 'white' : '#0A7C6E',
-                        color: agent.is_active ? '#C53030' : 'white',
+                        border: `1px solid ${agent.active ? '#C53030' : '#0A7C6E'}`,
+                        background: agent.active ? 'white' : '#0A7C6E',
+                        color: agent.active ? '#C53030' : 'white',
                         fontFamily: 'Syne, sans-serif',
                         fontSize: 11,
                         fontWeight: 600,
                         cursor: 'pointer',
                       }}
                     >
-                      {agent.is_active ? 'Désactiver' : 'Activer'}
+                      {agent.active ? 'Désactiver' : 'Activer'}
                     </button>
 
                     <button
