@@ -56,15 +56,16 @@ export async function POST(req: NextRequest) {
 
     // Créer l'agent pour CETTE clinique
     const { error: agentError } = await supabaseAdmin
-      .from('ai_agents')
-      .insert({
-        clinic_id: membership.clinic_id,
-        name: 'Réceptionniste IA',
-        type: keyRow.agent_type,
-        provider: 'retell',
-        provider_agent_id: activationKey, // à remplacer par un vrai ID Retell plus tard
-        is_active: true,
-      })
+  .from('ai_agents')
+  .insert({
+    clinic_id: membership.clinic_id,
+    user_id: user.id,          // ← ajoute cette ligne
+    name: 'Réceptionniste IA',
+    type: keyRow.agent_type,
+    provider: 'retell',
+    provider_agent_id: activationKey,
+    is_active: true,
+  })
 
     if (agentError) {
       return NextResponse.json({ error: agentError.message }, { status: 500 })
