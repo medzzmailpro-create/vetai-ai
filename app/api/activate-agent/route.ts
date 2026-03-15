@@ -59,7 +59,8 @@ export async function POST(req: NextRequest) {
   .from('ai_agents')
   .insert({
     clinic_id: membership.clinic_id,
-    agent_id: activationKey,        // ← ajoute cette ligne
+    user_id: user.id,
+    agent_id: activationKey,
     name: 'Réceptionniste IA',
     type: keyRow.agent_type,
     provider: 'retell',
