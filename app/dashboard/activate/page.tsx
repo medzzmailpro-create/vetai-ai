@@ -1,12 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { supabase } from '@/lib/supabase/client'
 
 export default function ActivatePage() {
   const [activationKey, setActivationKey] = useState('')
@@ -17,9 +12,15 @@ export default function ActivatePage() {
     setMessage('')
     setLoading(true)
 
+    // Debug : on affiche ce que Supabase voit
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-      setMessage('Session introuvable, reconnecte-toi.')
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    console.log('session:', session)
+    console.log('user:', user)
+
+    if (!session || !user) {
+      setMessage(`Debug: session=${!!session}, user=${!!user}`)
       setLoading(false)
       return
     }
