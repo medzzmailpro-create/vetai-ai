@@ -1,4 +1,45 @@
-'use client'
+import { createClient } from '@supabase/supabase-js'
+import { NextResponse } from 'next/server'
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
+export async function POST(req: Request) {
+  const { email, password, first_name, last_name, role } = await req.json()
+
+  // Créer l'utilisateur dans auth
+  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+  })
+
+  if (authError) {
+    return NextResponse.json({ error: authError.message }, { status: 400 })
+  }
+
+  // Créer le profil
+  const { error: profileError } = await supabaseAdmin
+    .from('profiles')
+    .insert({
+      id: authData.user.id,
+      email,
+      first_name,
+      last_name,
+      role: role ?? 'client',
+      has_paid: false,
+    })
+
+  if (profileError) {
+    return NextResponse.json({ error: profileError.message }, { status: 400 })
+  }
+
+  return NextResponse.json({ success: true })
+}
+2. Ensuite dis-moi et je t'enverrai le code du formulaire à ajouter dans /admin pour appeler cette route.jai mis21:36Maintenant voici le code complet de /admin avec le formulaire de création d'utilisateur intégré. Remplace tout ton fichier :
+tsx'use client'
 
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
@@ -30,6 +71,14 @@ type KeyForm = {
   calendarId: string
 }
 
+type UserForm = {
+  email: string
+  password: string
+  first_name: string
+  last_name: string
+  role: 'client' | 'support'
+}
+
 export default function AdminPage() {
   const router = useRouter()
   const [profiles, setProfiles] = useState<Profile[]>([])
@@ -50,6 +99,16 @@ export default function AdminPage() {
   const [generatedKey, setGeneratedKey] = useState<string | null>(null)
   const [keyLoading, setKeyLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+
+  const [showUserForm, setShowUserForm] = useState(false)
+  const [userForm, setUserForm] = useState<UserForm>({
+    email: '',
+    password: '',
+    first_name: '',
+    last_name: '',
+    role: 'client',
+  })
+  const [userLoading, setUserLoading] = useState(false)
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type })
@@ -139,9 +198,7 @@ export default function AdminPage() {
     }
     setKeyLoading(true)
     setGeneratedKey(null)
-
     const key = generateKeyString(keyForm.clinicName)
-
     const { error } = await supabase
       .from('activation_keys')
       .insert({
@@ -155,17 +212,31 @@ export default function AdminPage() {
         calendar_id: keyForm.calendarId || null,
         is_used: false,
       })
-
     setKeyLoading(false)
-
-    if (error) {
-      showToast(`Erreur : ${error.message}`, 'error')
-      return
-    }
-
+    if (error) { showToast(`Erreur : ${error.message}`, 'error'); return }
     setGeneratedKey(key)
     setKeyForm({ clinicName: '', retellAgentId: '', twilioPhone: '', twilioAccountSid: '', n8nWebhookUrl: '', calendarId: '' })
     showToast('Clé créée avec succès ✓', 'success')
+  }
+
+  const handleCreateUser = async () => {
+    if (!userForm.email.trim() || !userForm.password.trim()) {
+      showToast('Email et mot de passe requis.', 'error')
+      return
+    }
+    setUserLoading(true)
+    const res = await fetch('/api/admin/create-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userForm),
+    })
+    const json = await res.json()
+    setUserLoading(false)
+    if (!res.ok) { showToast(`Erreur : ${json.error}`, 'error'); return }
+    showToast(`Compte créé pour ${userForm.email} ✓`, 'success')
+    setUserForm({ email: '', password: '', first_name: '', last_name: '', role: 'client' })
+    setShowUserForm(false)
+    loadProfiles()
   }
 
   const handleCopy = () => {
@@ -187,31 +258,14 @@ export default function AdminPage() {
   const blocked = profiles.filter(p => !p.has_paid).length
 
   const inputStyle: React.CSSProperties = {
-    padding: '9px 14px',
-    border: '1.5px solid #D4D4D2',
-    borderRadius: 8,
-    fontFamily: 'DM Sans, sans-serif',
-    fontSize: 14,
-    color: '#2A2A28',
-    background: '#F5F5F3',
-    outline: 'none',
-    width: '100%',
-    boxSizing: 'border-box',
+    padding: '9px 14px', border: '1.5px solid #D4D4D2', borderRadius: 8,
+    fontFamily: 'DM Sans, sans-serif', fontSize: 14, color: '#2A2A28',
+    background: '#F5F5F3', outline: 'none', width: '100%', boxSizing: 'border-box',
   }
-
-  const fieldStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 6,
-  }
-
+  const fieldStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 6 }
   const labelStyle: React.CSSProperties = {
-    fontFamily: 'Syne, sans-serif',
-    fontSize: 11,
-    fontWeight: 700,
-    color: '#9E9E9B',
-    letterSpacing: '0.07em',
-    textTransform: 'uppercase',
+    fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700,
+    color: '#9E9E9B', letterSpacing: '0.07em', textTransform: 'uppercase',
   }
 
   if (loading) return (
@@ -242,29 +296,97 @@ export default function AdminPage() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 20, fontWeight: 800, color: '#0A7C6E', display: 'flex', alignItems: 'center', gap: 6 }}>
-            Vetai.AI
-            <div style={{ width: 7, height: 7, background: '#F5A623', borderRadius: '50%' }} />
+            Vetai.AI<div style={{ width: 7, height: 7, background: '#F5A623', borderRadius: '50%' }} />
           </div>
           <div style={{ width: 1, height: 28, background: '#EBEBEA' }} />
-          <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 18, fontWeight: 800, color: '#141412' }}>
-            🛡️ Panel Support
-          </div>
+          <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 18, fontWeight: 800, color: '#141412' }}>🛡️ Panel Support</div>
           <div style={{
             background: '#FFF8E7', border: '1px solid #F5A623', borderRadius: 100,
             padding: '4px 12px', fontFamily: 'Syne, sans-serif', fontSize: 11,
             fontWeight: 700, color: '#92590A', letterSpacing: '0.05em', textTransform: 'uppercase',
+          }}>Accès restreint — Support uniquement</div>
+        </div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <button onClick={() => setShowUserForm(true)} style={{
+            padding: '8px 16px', background: '#0A7C6E', border: 'none',
+            borderRadius: 8, fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700,
+            color: 'white', cursor: 'pointer',
           }}>
-            Accès restreint — Support uniquement
+            + Créer un compte
+          </button>
+          <button onClick={handleLogout} style={{
+            padding: '8px 16px', background: 'none', border: '1.5px solid #D4D4D2',
+            borderRadius: 8, fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 600,
+            color: '#5C5C59', cursor: 'pointer',
+          }}>Se déconnecter</button>
+        </div>
+      </header>
+
+      {/* Modal création utilisateur */}
+      {showUserForm && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 9998,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+        }}>
+          <div style={{
+            background: 'white', borderRadius: 16, padding: 32, width: '100%', maxWidth: 480,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+          }}>
+            <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 18, fontWeight: 800, color: '#141412', marginBottom: 24 }}>
+              👤 Créer un compte
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div style={fieldStyle}>
+                  <label style={labelStyle}>Prénom</label>
+                  <input style={inputStyle} placeholder="Jean" value={userForm.first_name} onChange={e => setUserForm(f => ({ ...f, first_name: e.target.value }))} />
+                </div>
+                <div style={fieldStyle}>
+                  <label style={labelStyle}>Nom</label>
+                  <input style={inputStyle} placeholder="Dupont" value={userForm.last_name} onChange={e => setUserForm(f => ({ ...f, last_name: e.target.value }))} />
+                </div>
+              </div>
+              <div style={fieldStyle}>
+                <label style={labelStyle}>Email *</label>
+                <input style={inputStyle} placeholder="jean@clinique.fr" type="email" value={userForm.email} onChange={e => setUserForm(f => ({ ...f, email: e.target.value }))} />
+              </div>
+              <div style={fieldStyle}>
+                <label style={labelStyle}>Mot de passe *</label>
+                <input style={inputStyle} placeholder="Min. 8 caractères" type="password" value={userForm.password} onChange={e => setUserForm(f => ({ ...f, password: e.target.value }))} />
+              </div>
+              <div style={fieldStyle}>
+                <label style={labelStyle}>Rôle</label>
+                <select style={inputStyle} value={userForm.role} onChange={e => setUserForm(f => ({ ...f, role: e.target.value as 'client' | 'support' }))}>
+                  <option value="client">Client</option>
+                  <option value="support">Support</option>
+                </select>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+              <button
+                onClick={handleCreateUser}
+                disabled={userLoading}
+                style={{
+                  flex: 1, padding: '12px', background: userLoading ? '#D4D4D2' : '#0A7C6E',
+                  border: 'none', borderRadius: 9, color: 'white',
+                  fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700,
+                  cursor: userLoading ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {userLoading ? 'Création…' : 'Créer le compte'}
+              </button>
+              <button
+                onClick={() => setShowUserForm(false)}
+                style={{
+                  padding: '12px 20px', background: 'none', border: '1.5px solid #D4D4D2',
+                  borderRadius: 9, fontFamily: 'Syne, sans-serif', fontSize: 14,
+                  fontWeight: 600, color: '#5C5C59', cursor: 'pointer',
+                }}
+              >Annuler</button>
+            </div>
           </div>
         </div>
-        <button onClick={handleLogout} style={{
-          padding: '8px 16px', background: 'none', border: '1.5px solid #D4D4D2',
-          borderRadius: 8, fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 600,
-          color: '#5C5C59', cursor: 'pointer',
-        }}>
-          Se déconnecter
-        </button>
-      </header>
+      )}
 
       <main style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px' }}>
 
@@ -280,46 +402,32 @@ export default function AdminPage() {
             }}>
               <div style={{ fontSize: 28 }}>{k.icon}</div>
               <div>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 32, fontWeight: 800, color: k.color, lineHeight: 1 }}>
-                  {k.value}
-                </div>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 32, fontWeight: 800, color: k.color, lineHeight: 1 }}>{k.value}</div>
                 <div style={{ fontSize: 13, color: '#9E9E9B', marginTop: 4 }}>{k.label}</div>
               </div>
             </div>
           ))}
         </div>
 
-        <div style={{
-          background: 'white', border: '1.5px solid #EBEBEA', borderRadius: 16,
-          overflow: 'hidden', marginBottom: 24,
-        }}>
-          <div
-            onClick={() => setShowKeyForm(!showKeyForm)}
-            style={{
-              padding: '18px 24px', display: 'flex', alignItems: 'center',
-              justifyContent: 'space-between', cursor: 'pointer',
-              borderBottom: showKeyForm ? '1px solid #EBEBEA' : 'none',
-            }}
-          >
+        {/* Clé d'activation */}
+        <div style={{ background: 'white', border: '1.5px solid #EBEBEA', borderRadius: 16, overflow: 'hidden', marginBottom: 24 }}>
+          <div onClick={() => setShowKeyForm(!showKeyForm)} style={{
+            padding: '18px 24px', display: 'flex', alignItems: 'center',
+            justifyContent: 'space-between', cursor: 'pointer',
+            borderBottom: showKeyForm ? '1px solid #EBEBEA' : 'none',
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <span style={{ fontSize: 20 }}>🔑</span>
               <div>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 15, fontWeight: 800, color: '#141412' }}>
-                  Créer une clé d'activation
-                </div>
-                <div style={{ fontSize: 12, color: '#9E9E9B', marginTop: 2 }}>
-                  Génère une clé pour une clinique — elle active tous les agents d'un coup
-                </div>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 15, fontWeight: 800, color: '#141412' }}>Créer une clé d'activation</div>
+                <div style={{ fontSize: 12, color: '#9E9E9B', marginTop: 2 }}>Génère une clé pour une clinique — elle active tous les agents d'un coup</div>
               </div>
             </div>
             <div style={{
               width: 28, height: 28, borderRadius: '50%', background: '#F5F5F3',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 14, color: '#5C5C59', transition: 'transform 0.2s',
-              transform: showKeyForm ? 'rotate(180deg)' : 'rotate(0deg)',
-            }}>
-              ▾
-            </div>
+              fontSize: 14, color: '#5C5C59', transform: showKeyForm ? 'rotate(180deg)' : 'rotate(0deg)',
+            }}>▾</div>
           </div>
 
           {showKeyForm && (
@@ -331,105 +439,49 @@ export default function AdminPage() {
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
                 }}>
                   <div>
-                    <div style={{ fontSize: 11, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: '#0A7C6E', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
-                      ✅ Clé générée — à envoyer à la clinique
-                    </div>
-                    <div style={{ fontFamily: 'monospace', fontSize: 20, fontWeight: 700, color: '#141412', letterSpacing: '0.05em' }}>
-                      {generatedKey}
-                    </div>
+                    <div style={{ fontSize: 11, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: '#0A7C6E', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>✅ Clé générée</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: 20, fontWeight: 700, color: '#141412' }}>{generatedKey}</div>
                   </div>
                   <button onClick={handleCopy} style={{
                     padding: '10px 20px', background: copied ? '#38A169' : '#0A7C6E',
                     border: 'none', borderRadius: 8, color: 'white',
-                    fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700,
-                    cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-                  }}>
-                    {copied ? '✓ Copié !' : 'Copier'}
-                  </button>
+                    fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                  }}>{copied ? '✓ Copié !' : 'Copier'}</button>
                 </div>
               )}
-
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div style={{ ...fieldStyle, gridColumn: '1 / -1' }}>
                   <label style={labelStyle}>Nom de la clinique *</label>
-                  <input
-                    style={inputStyle}
-                    placeholder="Ex: Clinique Vétérinaire Nantes Centre"
-                    value={keyForm.clinicName}
-                    onChange={e => setKeyForm(f => ({ ...f, clinicName: e.target.value }))}
-                  />
-                  {keyForm.clinicName && (
-                    <div style={{ fontSize: 11, color: '#9E9E9B', marginTop: 2 }}>
-                      Clé générée : <strong>{generateKeyString(keyForm.clinicName)}</strong>
-                    </div>
-                  )}
+                  <input style={inputStyle} placeholder="Ex: Clinique Vétérinaire Nantes Centre" value={keyForm.clinicName} onChange={e => setKeyForm(f => ({ ...f, clinicName: e.target.value }))} />
+                  {keyForm.clinicName && <div style={{ fontSize: 11, color: '#9E9E9B', marginTop: 2 }}>Clé : <strong>{generateKeyString(keyForm.clinicName)}</strong></div>}
                 </div>
-                <div style={fieldStyle}>
-                  <label style={labelStyle}>Retell Agent ID</label>
-                  <input style={inputStyle} placeholder="agent_abc123..." value={keyForm.retellAgentId} onChange={e => setKeyForm(f => ({ ...f, retellAgentId: e.target.value }))} />
-                </div>
-                <div style={fieldStyle}>
-                  <label style={labelStyle}>Numéro Twilio</label>
-                  <input style={inputStyle} placeholder="+33612345678" value={keyForm.twilioPhone} onChange={e => setKeyForm(f => ({ ...f, twilioPhone: e.target.value }))} />
-                </div>
-                <div style={fieldStyle}>
-                  <label style={labelStyle}>Twilio Account SID</label>
-                  <input style={inputStyle} placeholder="ACxxxxxxxxxx" value={keyForm.twilioAccountSid} onChange={e => setKeyForm(f => ({ ...f, twilioAccountSid: e.target.value }))} />
-                </div>
-                <div style={fieldStyle}>
-                  <label style={labelStyle}>Google Calendar ID</label>
-                  <input style={inputStyle} placeholder="xyz@group.calendar.google.com" value={keyForm.calendarId} onChange={e => setKeyForm(f => ({ ...f, calendarId: e.target.value }))} />
-                </div>
-                <div style={{ ...fieldStyle, gridColumn: '1 / -1' }}>
-                  <label style={labelStyle}>Webhook n8n</label>
-                  <input style={inputStyle} placeholder="https://n8n.vetai.fr/webhook/..." value={keyForm.n8nWebhookUrl} onChange={e => setKeyForm(f => ({ ...f, n8nWebhookUrl: e.target.value }))} />
-                </div>
+                <div style={fieldStyle}><label style={labelStyle}>Retell Agent ID</label><input style={inputStyle} placeholder="agent_abc123..." value={keyForm.retellAgentId} onChange={e => setKeyForm(f => ({ ...f, retellAgentId: e.target.value }))} /></div>
+                <div style={fieldStyle}><label style={labelStyle}>Numéro Twilio</label><input style={inputStyle} placeholder="+33612345678" value={keyForm.twilioPhone} onChange={e => setKeyForm(f => ({ ...f, twilioPhone: e.target.value }))} /></div>
+                <div style={fieldStyle}><label style={labelStyle}>Twilio Account SID</label><input style={inputStyle} placeholder="ACxxxxxxxxxx" value={keyForm.twilioAccountSid} onChange={e => setKeyForm(f => ({ ...f, twilioAccountSid: e.target.value }))} /></div>
+                <div style={fieldStyle}><label style={labelStyle}>Google Calendar ID</label><input style={inputStyle} placeholder="xyz@group.calendar.google.com" value={keyForm.calendarId} onChange={e => setKeyForm(f => ({ ...f, calendarId: e.target.value }))} /></div>
+                <div style={{ ...fieldStyle, gridColumn: '1 / -1' }}><label style={labelStyle}>Webhook n8n</label><input style={inputStyle} placeholder="https://n8n.vetai.fr/webhook/..." value={keyForm.n8nWebhookUrl} onChange={e => setKeyForm(f => ({ ...f, n8nWebhookUrl: e.target.value }))} /></div>
               </div>
-
               <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
-                <button
-                  onClick={handleCreateKey}
-                  disabled={keyLoading || !keyForm.clinicName.trim()}
-                  style={{
-                    padding: '11px 28px',
-                    background: keyLoading || !keyForm.clinicName.trim() ? '#D4D4D2' : '#0A7C6E',
-                    border: 'none', borderRadius: 9, color: 'white',
-                    fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700,
-                    cursor: keyLoading || !keyForm.clinicName.trim() ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {keyLoading ? 'Création…' : '🔑 Générer la clé'}
-                </button>
-                <button
-                  onClick={() => { setShowKeyForm(false); setGeneratedKey(null) }}
-                  style={{
-                    padding: '11px 20px', background: 'none',
-                    border: '1.5px solid #D4D4D2', borderRadius: 9,
-                    fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 600,
-                    color: '#5C5C59', cursor: 'pointer',
-                  }}
-                >
-                  Fermer
-                </button>
-              </div>
-              <div style={{ marginTop: 12, fontSize: 12, color: '#C8C8C6' }}>
-                Seul le nom est obligatoire. Les autres champs peuvent être remplis plus tard dans Supabase.
+                <button onClick={handleCreateKey} disabled={keyLoading || !keyForm.clinicName.trim()} style={{
+                  padding: '11px 28px', background: keyLoading || !keyForm.clinicName.trim() ? '#D4D4D2' : '#0A7C6E',
+                  border: 'none', borderRadius: 9, color: 'white',
+                  fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700,
+                  cursor: keyLoading || !keyForm.clinicName.trim() ? 'not-allowed' : 'pointer',
+                }}>{keyLoading ? 'Création…' : '🔑 Générer la clé'}</button>
+                <button onClick={() => { setShowKeyForm(false); setGeneratedKey(null) }} style={{
+                  padding: '11px 20px', background: 'none', border: '1.5px solid #D4D4D2',
+                  borderRadius: 9, fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 600,
+                  color: '#5C5C59', cursor: 'pointer',
+                }}>Fermer</button>
               </div>
             </div>
           )}
         </div>
 
+        {/* Table */}
         <div style={{ background: 'white', border: '1.5px solid #EBEBEA', borderRadius: 16, overflow: 'hidden' }}>
-          <div style={{
-            padding: '16px 24px', borderBottom: '1px solid #EBEBEA',
-            display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap',
-          }}>
-            <input
-              placeholder="🔍  Rechercher par nom ou email…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              style={{ ...inputStyle, width: 280 }}
-            />
+          <div style={{ padding: '16px 24px', borderBottom: '1px solid #EBEBEA', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <input placeholder="🔍  Rechercher par nom ou email…" value={search} onChange={e => setSearch(e.target.value)} style={{ ...inputStyle, width: 280 }} />
             <div style={{ display: 'flex', gap: 6 }}>
               {(['all', 'active', 'blocked'] as const).map(f => (
                 <button key={f} onClick={() => setFilter(f)} style={{
@@ -437,14 +489,10 @@ export default function AdminPage() {
                   fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 600,
                   background: filter === f ? '#0A7C6E' : '#F5F5F3',
                   color: filter === f ? 'white' : '#5C5C59',
-                }}>
-                  {f === 'all' ? 'Tous' : f === 'active' ? 'Accès actif' : 'Accès bloqué'}
-                </button>
+                }}>{f === 'all' ? 'Tous' : f === 'active' ? 'Accès actif' : 'Accès bloqué'}</button>
               ))}
             </div>
-            <div style={{ marginLeft: 'auto', fontSize: 13, color: '#9E9E9B' }}>
-              {filtered.length} résultat{filtered.length !== 1 ? 's' : ''}
-            </div>
+            <div style={{ marginLeft: 'auto', fontSize: 13, color: '#9E9E9B' }}>{filtered.length} résultat{filtered.length !== 1 ? 's' : ''}</div>
           </div>
 
           <div style={{ overflowX: 'auto' }}>
@@ -456,26 +504,19 @@ export default function AdminPage() {
                       padding: '12px 16px', textAlign: 'left',
                       fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700,
                       color: '#9E9E9B', letterSpacing: '0.07em', textTransform: 'uppercase', whiteSpace: 'nowrap',
-                    }}>
-                      {col}
-                    </th>
+                    }}>{col}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} style={{ padding: '56px 24px', textAlign: 'center', color: '#9E9E9B', fontSize: 14 }}>
-                      Aucun utilisateur trouvé
-                    </td>
-                  </tr>
+                  <tr><td colSpan={6} style={{ padding: '56px 24px', textAlign: 'center', color: '#9E9E9B', fontSize: 14 }}>Aucun utilisateur trouvé</td></tr>
                 ) : (
                   filtered.map(profile => {
                     const initials = [profile.first_name?.[0], profile.last_name?.[0]].filter(Boolean).join('').toUpperCase() || '?'
                     const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || '—'
                     const clinicName = profile.clinics?.name || '—'
                     const date = new Date(profile.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
-
                     return (
                       <tr key={profile.id} style={{ borderBottom: '1px solid #F5F5F3' }}
                         onMouseEnter={e => (e.currentTarget.style.background = '#FAFAF8')}
@@ -488,12 +529,8 @@ export default function AdminPage() {
                               background: 'linear-gradient(135deg, #0A7C6E, #0D9E8D)',
                               color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
                               fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, flexShrink: 0,
-                            }}>
-                              {initials}
-                            </div>
-                            <span style={{ fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 600, color: '#141412', whiteSpace: 'nowrap' }}>
-                              {fullName}
-                            </span>
+                            }}>{initials}</div>
+                            <span style={{ fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 600, color: '#141412', whiteSpace: 'nowrap' }}>{fullName}</span>
                           </div>
                         </td>
                         <td style={{ padding: '14px 16px', fontSize: 13, color: '#5C5C59' }}>{profile.email || '—'}</td>
@@ -523,9 +560,7 @@ export default function AdminPage() {
                             background: profile.role === 'support' ? '#FFF8E7' : '#F5F5F3',
                             color: profile.role === 'support' ? '#92590A' : '#5C5C59',
                             border: profile.role === 'support' ? '1px solid #F5A623' : '1px solid #EBEBEA',
-                          }}>
-                            {profile.role === 'support' ? 'Support' : 'Client'}
-                          </span>
+                          }}>{profile.role === 'support' ? 'Support' : 'Client'}</span>
                         </td>
                       </tr>
                     )
@@ -534,7 +569,6 @@ export default function AdminPage() {
               </tbody>
             </table>
           </div>
-
           {filtered.length > 0 && (
             <div style={{ padding: '12px 24px', borderTop: '1px solid #F5F5F3', fontSize: 12, color: '#C8C8C6' }}>
               Les rôles ne peuvent être modifiés que via Supabase Table Editor.
