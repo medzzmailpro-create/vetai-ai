@@ -19,27 +19,23 @@ export default function DashboardPage() {
 
       const user = data.session.user
 
-      // Admin bypass — toujours autoriser
+      // Admin bypass
       const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL
       if (adminEmail && user.email?.toLowerCase() === adminEmail.toLowerCase()) {
         setLoading(false)
         return
       }
 
-      // Vérification paiement dans clinic_members
-      try {
-        const { data: memberData } = await supabase
-          .from('clinic_members')
-          .select('has_paid')
-          .eq('user_id', user.id)
-          .single()
+      // ✅ On lit has_paid dans PROFILES (pas clinic_members)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('has_paid')
+        .eq('id', user.id)
+        .single()
 
-        if (!memberData?.has_paid) {
-          router.push('/payment-required')
-          return
-        }
-      } catch {
-        // Colonne absente (migration non appliquée) → autoriser l'accès
+      if (!profile?.has_paid) {
+        router.push('/payment-required')
+        return
       }
 
       setLoading(false)
