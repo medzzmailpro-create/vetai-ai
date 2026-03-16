@@ -144,7 +144,16 @@ export default function AdminPage() {
   const openConfigPopup = async (clinic: Clinic) => {
     if (!clinic.owner_user_id) { showToast('Aucun propriétaire pour cette clinique.', 'error'); return }
     setConfigLoading(true)
-    const { data } = await supabase.from('clinic_config').select('*').eq('user_id', clinic.owner_user_id).single()
+    // Cherche la config parmi tous les membres de la clinique
+const memberIds = clinic.members?.map(m => m.id) ?? []
+if (clinic.owner_user_id) memberIds.push(clinic.owner_user_id)
+
+const { data } = await supabase
+  .from('clinic_config')
+  .select('*')
+  .in('user_id', memberIds)
+  .limit(1)
+  .single()
     setConfigLoading(false)
     if (!data) { showToast('Aucune configuration renseignée.', 'error'); return }
     setConfigPopup({
