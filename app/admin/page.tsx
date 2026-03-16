@@ -16,7 +16,7 @@ type Profile = {
   has_paid: boolean
   role: string
   created_at: string
-  clinics: ClinicRow[] | ClinicRow | null
+  clinics: ClinicRow | null
 }
 
 type Filter = 'all' | 'active' | 'blocked'
@@ -38,7 +38,6 @@ export default function AdminPage() {
   const [filter, setFilter] = useState<Filter>('all')
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
-  // Key creation state
   const [showKeyForm, setShowKeyForm] = useState(false)
   const [keyForm, setKeyForm] = useState<KeyForm>({
     clinicName: '',
@@ -60,7 +59,7 @@ export default function AdminPage() {
   const loadProfiles = useCallback(async () => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, first_name, last_name, email, phone, clinic_id, has_paid, role, created_at, clinics(name)')
+      .select('id, first_name, last_name, email, phone, clinic_id, has_paid, role, created_at')
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -68,7 +67,24 @@ export default function AdminPage() {
       setLoading(false)
       return
     }
-    setProfiles((data ?? []) as Profile[])
+
+    const clinicIds = [...new Set((data ?? []).map((p: any) => p.clinic_id).filter(Boolean))]
+    let clinicMap: Record<string, string> = {}
+
+    if (clinicIds.length > 0) {
+      const { data: clinicsData } = await supabase
+        .from('clinics')
+        .select('id, name')
+        .in('id', clinicIds)
+      clinicsData?.forEach((c: any) => { clinicMap[c.id] = c.name })
+    }
+
+    const enriched = (data ?? []).map((p: any) => ({
+      ...p,
+      clinics: p.clinic_id ? { name: clinicMap[p.clinic_id] ?? '—' } : null,
+    }))
+
+    setProfiles(enriched as Profile[])
     setLoading(false)
   }, [])
 
@@ -104,7 +120,6 @@ export default function AdminPage() {
     router.push('/')
   }
 
-  // Generate key from clinic name: VETAI-NANTES-01 style
   const generateKeyString = (clinicName: string) => {
     const slug = clinicName
       .toUpperCase()
@@ -208,7 +223,6 @@ export default function AdminPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#F5F5F3', fontFamily: 'DM Sans, sans-serif' }}>
 
-      {/* Toast */}
       {toast && (
         <div style={{
           position: 'fixed', top: 20, right: 20, zIndex: 9999,
@@ -221,7 +235,6 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Header */}
       <header style={{
         background: 'white', borderBottom: '1.5px solid #EBEBEA',
         padding: '0 32px', height: 64, display: 'flex', alignItems: 'center',
@@ -255,7 +268,6 @@ export default function AdminPage() {
 
       <main style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px' }}>
 
-        {/* KPI cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 28 }}>
           {[
             { label: 'Total utilisateurs', value: total, color: '#0A7C6E', icon: '👥' },
@@ -277,12 +289,10 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {/* ── CRÉER UNE CLÉ D'ACTIVATION ── */}
         <div style={{
           background: 'white', border: '1.5px solid #EBEBEA', borderRadius: 16,
           overflow: 'hidden', marginBottom: 24,
         }}>
-          {/* Header section */}
           <div
             onClick={() => setShowKeyForm(!showKeyForm)}
             style={{
@@ -314,8 +324,6 @@ export default function AdminPage() {
 
           {showKeyForm && (
             <div style={{ padding: '24px' }}>
-
-              {/* Clé générée */}
               {generatedKey && (
                 <div style={{
                   background: '#F0FDF8', border: '1.5px solid #0A7C6E', borderRadius: 12,
@@ -330,23 +338,18 @@ export default function AdminPage() {
                       {generatedKey}
                     </div>
                   </div>
-                  <button
-                    onClick={handleCopy}
-                    style={{
-                      padding: '10px 20px', background: copied ? '#38A169' : '#0A7C6E',
-                      border: 'none', borderRadius: 8, color: 'white',
-                      fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700,
-                      cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-                    }}
-                  >
+                  <button onClick={handleCopy} style={{
+                    padding: '10px 20px', background: copied ? '#38A169' : '#0A7C6E',
+                    border: 'none', borderRadius: 8, color: 'white',
+                    fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700,
+                    cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+                  }}>
                     {copied ? '✓ Copié !' : 'Copier'}
                   </button>
                 </div>
               )}
 
-              {/* Formulaire */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-
                 <div style={{ ...fieldStyle, gridColumn: '1 / -1' }}>
                   <label style={labelStyle}>Nom de la clinique *</label>
                   <input
@@ -361,57 +364,26 @@ export default function AdminPage() {
                     </div>
                   )}
                 </div>
-
                 <div style={fieldStyle}>
                   <label style={labelStyle}>Retell Agent ID</label>
-                  <input
-                    style={inputStyle}
-                    placeholder="agent_abc123..."
-                    value={keyForm.retellAgentId}
-                    onChange={e => setKeyForm(f => ({ ...f, retellAgentId: e.target.value }))}
-                  />
+                  <input style={inputStyle} placeholder="agent_abc123..." value={keyForm.retellAgentId} onChange={e => setKeyForm(f => ({ ...f, retellAgentId: e.target.value }))} />
                 </div>
-
                 <div style={fieldStyle}>
                   <label style={labelStyle}>Numéro Twilio</label>
-                  <input
-                    style={inputStyle}
-                    placeholder="+33612345678"
-                    value={keyForm.twilioPhone}
-                    onChange={e => setKeyForm(f => ({ ...f, twilioPhone: e.target.value }))}
-                  />
+                  <input style={inputStyle} placeholder="+33612345678" value={keyForm.twilioPhone} onChange={e => setKeyForm(f => ({ ...f, twilioPhone: e.target.value }))} />
                 </div>
-
                 <div style={fieldStyle}>
                   <label style={labelStyle}>Twilio Account SID</label>
-                  <input
-                    style={inputStyle}
-                    placeholder="ACxxxxxxxxxx"
-                    value={keyForm.twilioAccountSid}
-                    onChange={e => setKeyForm(f => ({ ...f, twilioAccountSid: e.target.value }))}
-                  />
+                  <input style={inputStyle} placeholder="ACxxxxxxxxxx" value={keyForm.twilioAccountSid} onChange={e => setKeyForm(f => ({ ...f, twilioAccountSid: e.target.value }))} />
                 </div>
-
                 <div style={fieldStyle}>
                   <label style={labelStyle}>Google Calendar ID</label>
-                  <input
-                    style={inputStyle}
-                    placeholder="xyz@group.calendar.google.com"
-                    value={keyForm.calendarId}
-                    onChange={e => setKeyForm(f => ({ ...f, calendarId: e.target.value }))}
-                  />
+                  <input style={inputStyle} placeholder="xyz@group.calendar.google.com" value={keyForm.calendarId} onChange={e => setKeyForm(f => ({ ...f, calendarId: e.target.value }))} />
                 </div>
-
                 <div style={{ ...fieldStyle, gridColumn: '1 / -1' }}>
                   <label style={labelStyle}>Webhook n8n</label>
-                  <input
-                    style={inputStyle}
-                    placeholder="https://n8n.vetai.fr/webhook/..."
-                    value={keyForm.n8nWebhookUrl}
-                    onChange={e => setKeyForm(f => ({ ...f, n8nWebhookUrl: e.target.value }))}
-                  />
+                  <input style={inputStyle} placeholder="https://n8n.vetai.fr/webhook/..." value={keyForm.n8nWebhookUrl} onChange={e => setKeyForm(f => ({ ...f, n8nWebhookUrl: e.target.value }))} />
                 </div>
-
               </div>
 
               <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
@@ -440,7 +412,6 @@ export default function AdminPage() {
                   Fermer
                 </button>
               </div>
-
               <div style={{ marginTop: 12, fontSize: 12, color: '#C8C8C6' }}>
                 Seul le nom est obligatoire. Les autres champs peuvent être remplis plus tard dans Supabase.
               </div>
@@ -448,9 +419,7 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* Table card */}
         <div style={{ background: 'white', border: '1.5px solid #EBEBEA', borderRadius: 16, overflow: 'hidden' }}>
-
           <div style={{
             padding: '16px 24px', borderBottom: '1px solid #EBEBEA',
             display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap',
@@ -504,8 +473,7 @@ export default function AdminPage() {
                   filtered.map(profile => {
                     const initials = [profile.first_name?.[0], profile.last_name?.[0]].filter(Boolean).join('').toUpperCase() || '?'
                     const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || '—'
-                    const clinicRow = Array.isArray(profile.clinics) ? profile.clinics[0] : profile.clinics
-                    const clinicName = clinicRow?.name || '—'
+                    const clinicName = profile.clinics?.name || '—'
                     const date = new Date(profile.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
 
                     return (
