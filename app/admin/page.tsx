@@ -33,6 +33,7 @@ type Clinic = {
 
 type Filter = 'all' | 'active' | 'blocked'
 type Tab = 'users' | 'clinics'
+type SortOption = 'name' | 'date_asc' | 'date_desc'
 
 type KeyForm = {
   clinicName: string
@@ -60,6 +61,9 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
+  const [userSort, setUserSort] = useState<SortOption>('date_desc')
+  const [clinicSearch, setClinicSearch] = useState('')
+  const [clinicSort, setClinicSort] = useState<SortOption>('date_desc')
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<{ type: 'user' | 'clinic'; id: string; label: string } | null>(null)
   const [showKeyForm, setShowKeyForm] = useState(false)
@@ -98,16 +102,13 @@ export default function AdminPage() {
       .select('id, name, email, phone, address, opening_hours, clinic_type, owner_user_id, created_at')
       .order('created_at', { ascending: false })
     if (error) { showToast('Erreur chargement cliniques.', 'error'); return }
-
     const ownerIds = Array.from(new Set((data ?? []).map((c: any) => c.owner_user_id).filter(Boolean)))
     let ownerMap: Record<string, Profile> = {}
     if (ownerIds.length > 0) {
       const { data: owners } = await supabase.from('profiles').select('id, first_name, last_name, email, phone').in('id', ownerIds)
       owners?.forEach((o: any) => { ownerMap[o.id] = o })
     }
-
     const { data: allMembers } = await supabase.from('profiles').select('id, first_name, last_name, email, phone, clinic_id, has_paid, role, created_at').not('clinic_id', 'is', null)
-
     const enriched = (data ?? []).map((c: any) => ({
       ...c,
       owner: c.owner_user_id ? ownerMap[c.owner_user_id] ?? null : null,
@@ -144,10 +145,10 @@ export default function AdminPage() {
   }
 
   const deleteClinic = async (id: string) => {
-    // Réinitialise les membres (clinic_id = null, onboarding_completed = false)
     await supabase.from('profiles').update({ clinic_id: null, onboarding_completed: false, has_paid: false }).eq('clinic_id', id)
+    await supabase.from('ai_agents').delete().eq('clinic_id', id)
     await supabase.from('clinics').delete().eq('id', id)
-    showToast('Clinique supprimée — utilisateurs redirigés vers l\'onboarding ✓', 'success')
+    showToast('Clinique supprimée ✓', 'success')
     setConfirmDelete(null)
     loadClinics()
     loadProfiles()
@@ -185,12 +186,26 @@ export default function AdminPage() {
     loadProfiles()
   }
 
-  const filtered = profiles.filter(p => {
-    const q = search.toLowerCase()
-    const matchSearch = !q || p.first_name?.toLowerCase().includes(q) || p.last_name?.toLowerCase().includes(q) || p.email?.toLowerCase().includes(q)
-    const matchFilter = filter === 'all' || (filter === 'active' && p.has_paid) || (filter === 'blocked' && !p.has_paid)
-    return matchSearch && matchFilter
-  })
+  const filtered = profiles
+    .filter(p => {
+      const q = search.toLowerCase()
+      const matchSearch = !q || p.first_name?.toLowerCase().includes(q) || p.last_name?.toLowerCase().includes(q) || p.email?.toLowerCase().includes(q)
+      const matchFilter = filter === 'all' || (filter === 'active' && p.has_paid) || (filter === 'blocked' && !p.has_paid)
+      return matchSearch && matchFilter
+    })
+    .sort((a, b) => {
+      if (userSort === 'name') return ([a.first_name, a.last_name].filter(Boolean).join(' ')).localeCompare([b.first_name, b.last_name].filter(Boolean).join(' '))
+      if (userSort === 'date_asc') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
+
+  const filteredClinics = clinics
+    .filter(c => !clinicSearch || c.name?.toLowerCase().includes(clinicSearch.toLowerCase()))
+    .sort((a, b) => {
+      if (clinicSort === 'name') return (a.name ?? '').localeCompare(b.name ?? '')
+      if (clinicSort === 'date_asc') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
 
   const total = profiles.length
   const active = profiles.filter(p => p.has_paid).length
@@ -209,14 +224,12 @@ export default function AdminPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#F5F5F3', fontFamily: 'DM Sans, sans-serif' }}>
 
-      {/* Toast */}
       {toast && (
         <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 9999, background: toast.type === 'success' ? '#0A7C6E' : '#C53030', color: 'white', padding: '12px 20px', borderRadius: 10, fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 600, boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
           {toast.message}
         </div>
       )}
 
-      {/* Modal confirmation suppression */}
       {confirmDelete && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <div style={{ background: 'white', borderRadius: 16, padding: 32, maxWidth: 420, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
@@ -226,22 +239,17 @@ export default function AdminPage() {
             </div>
             <p style={{ fontSize: 14, color: '#5C5C59', lineHeight: 1.6, marginBottom: 24 }}>
               {confirmDelete.type === 'clinic'
-                ? `La clinique "${confirmDelete.label}" sera supprimée. Les utilisateurs garderont leur accès mais seront redirigés vers l'onboarding.`
+                ? `La clinique "${confirmDelete.label}" sera supprimée. Les utilisateurs seront redirigés vers l'onboarding.`
                 : `Le compte "${confirmDelete.label}" sera définitivement supprimé.`}
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => confirmDelete.type === 'user' ? deleteUser(confirmDelete.id) : deleteClinic(confirmDelete.id)} style={{ flex: 1, padding: '12px', background: '#C53030', border: 'none', borderRadius: 9, color: 'white', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
-                Supprimer
-              </button>
-              <button onClick={() => setConfirmDelete(null)} style={{ padding: '12px 20px', background: 'none', border: '1.5px solid #D4D4D2', borderRadius: 9, fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 600, color: '#5C5C59', cursor: 'pointer' }}>
-                Annuler
-              </button>
+              <button onClick={() => confirmDelete.type === 'user' ? deleteUser(confirmDelete.id) : deleteClinic(confirmDelete.id)} style={{ flex: 1, padding: '12px', background: '#C53030', border: 'none', borderRadius: 9, color: 'white', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Supprimer</button>
+              <button onClick={() => setConfirmDelete(null)} style={{ padding: '12px 20px', background: 'none', border: '1.5px solid #D4D4D2', borderRadius: 9, fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 600, color: '#5C5C59', cursor: 'pointer' }}>Annuler</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal création utilisateur */}
       {showUserForm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <div style={{ background: 'white', borderRadius: 16, padding: 32, width: '100%', maxWidth: 480, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
@@ -270,7 +278,6 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Header */}
       <header style={{ background: 'white', borderBottom: '1.5px solid #EBEBEA', padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 20, fontWeight: 800, color: '#0A7C6E', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -284,13 +291,13 @@ export default function AdminPage() {
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <button onClick={() => setShowUserForm(true)} style={{ padding: '8px 16px', background: '#0A7C6E', border: 'none', borderRadius: 8, fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, color: 'white', cursor: 'pointer' }}>+ Créer un compte</button>
+          <button onClick={() => router.push('/dashboard')} style={{ padding: '8px 16px', background: 'none', border: '1.5px solid #0A7C6E', borderRadius: 8, fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 600, color: '#0A7C6E', cursor: 'pointer' }}>← Dashboard</button>
           <button onClick={handleLogout} style={{ padding: '8px 16px', background: 'none', border: '1.5px solid #D4D4D2', borderRadius: 8, fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 600, color: '#5C5C59', cursor: 'pointer' }}>Se déconnecter</button>
         </div>
       </header>
 
       <main style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px' }}>
 
-        {/* KPI */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 28 }}>
           {[{ label: 'Total utilisateurs', value: total, color: '#0A7C6E', icon: '👥' }, { label: 'Accès actifs', value: active, color: '#38A169', icon: '✅' }, { label: 'Accès bloqués', value: blocked, color: '#C53030', icon: '🔒' }].map(k => (
             <div key={k.label} style={{ background: 'white', border: '1.5px solid #EBEBEA', borderRadius: 14, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -303,7 +310,6 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {/* Clé d'activation */}
         <div style={{ background: 'white', border: '1.5px solid #EBEBEA', borderRadius: 16, overflow: 'hidden', marginBottom: 24 }}>
           <div onClick={() => setShowKeyForm(!showKeyForm)} style={{ padding: '18px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', borderBottom: showKeyForm ? '1px solid #EBEBEA' : 'none' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -346,23 +352,29 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* Tabs */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
           {([['users', '👥 Utilisateurs'], ['clinics', '🏥 Cliniques']] as const).map(([t, label]) => (
-            <button key={t} onClick={() => setTab(t)} style={{ padding: '10px 20px', borderRadius: 10, border: tab === t ? 'none' : '1.5px solid #EBEBEA', cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, background: tab === t ? '#0A7C6E' : 'white', color: tab === t ? 'white' : '#5C5C59' }}>              {label}
+            <button key={t} onClick={() => setTab(t)} style={{ padding: '10px 20px', borderRadius: 10, border: tab === t ? 'none' : '1.5px solid #EBEBEA', cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, background: tab === t ? '#0A7C6E' : 'white', color: tab === t ? 'white' : '#5C5C59' }}>
+              {label}
             </button>
           ))}
         </div>
 
-        {/* ── TAB UTILISATEURS ── */}
         {tab === 'users' && (
           <div style={{ background: 'white', border: '1.5px solid #EBEBEA', borderRadius: 16, overflow: 'hidden' }}>
             <div style={{ padding: '16px 24px', borderBottom: '1px solid #EBEBEA', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-              <input placeholder="🔍  Rechercher par nom ou email…" value={search} onChange={e => setSearch(e.target.value)} style={{ ...inputStyle, width: 280 }} />
+              <input placeholder="🔍  Rechercher par nom ou email…" value={search} onChange={e => setSearch(e.target.value)} style={{ ...inputStyle, width: 240 }} />
               <div style={{ display: 'flex', gap: 6 }}>
                 {(['all', 'active', 'blocked'] as const).map(f => (
-                  <button key={f} onClick={() => setFilter(f)} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 600, background: filter === f ? '#0A7C6E' : '#F5F5F3', color: filter === f ? 'white' : '#5C5C59' }}>
-                    {f === 'all' ? 'Tous' : f === 'active' ? 'Accès actif' : 'Accès bloqué'}
+                  <button key={f} onClick={() => setFilter(f)} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 600, background: filter === f ? '#0A7C6E' : '#F5F5F3', color: filter === f ? 'white' : '#5C5C59' }}>
+                    {f === 'all' ? 'Tous' : f === 'active' ? 'Actif' : 'Bloqué'}
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {([['date_desc', '🕐 Récent'], ['date_asc', '🕐 Ancien'], ['name', '🔤 Nom']] as const).map(([val, label]) => (
+                  <button key={val} onClick={() => setUserSort(val)} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 600, background: userSort === val ? '#141412' : '#F5F5F3', color: userSort === val ? 'white' : '#5C5C59' }}>
+                    {label}
                   </button>
                 ))}
               </div>
@@ -412,7 +424,7 @@ export default function AdminPage() {
                         </td>
                         <td style={{ padding: '14px 16px' }}>
                           <button onClick={() => setConfirmDelete({ type: 'user', id: profile.id, label: [profile.first_name, profile.last_name].filter(Boolean).join(' ') || profile.email || profile.id })} style={{ padding: '6px 12px', background: '#FFF5F5', border: '1px solid #FEB2B2', borderRadius: 7, color: '#C53030', fontFamily: 'Syne, sans-serif', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                            🗑 Supprimer
+                            🗑
                           </button>
                         </td>
                       </tr>
@@ -424,14 +436,24 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ── TAB CLINIQUES ── */}
         {tab === 'clinics' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {clinics.length === 0 ? (
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <input placeholder="🔍  Rechercher une clinique…" value={clinicSearch} onChange={e => setClinicSearch(e.target.value)} style={{ ...inputStyle, width: 260 }} />
+              <div style={{ display: 'flex', gap: 6 }}>
+                {([['date_desc', '🕐 Récent'], ['date_asc', '🕐 Ancien'], ['name', '🔤 Nom']] as const).map(([val, label]) => (
+                  <button key={val} onClick={() => setClinicSort(val)} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 600, background: clinicSort === val ? '#141412' : '#F5F5F3', color: clinicSort === val ? 'white' : '#5C5C59' }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div style={{ marginLeft: 'auto', fontSize: 13, color: '#9E9E9B' }}>{filteredClinics.length} clinique{filteredClinics.length !== 1 ? 's' : ''}</div>
+            </div>
+
+            {filteredClinics.length === 0 ? (
               <div style={{ background: 'white', border: '1.5px solid #EBEBEA', borderRadius: 16, padding: '56px 24px', textAlign: 'center', color: '#9E9E9B', fontSize: 14 }}>Aucune clinique trouvée</div>
-            ) : clinics.map(clinic => (
+            ) : filteredClinics.map(clinic => (
               <div key={clinic.id} style={{ background: 'white', border: '1.5px solid #EBEBEA', borderRadius: 16, overflow: 'hidden' }}>
-                {/* Header clinique */}
                 <div onClick={() => setExpandedClinic(expandedClinic === clinic.id ? null : clinic.id)} style={{ padding: '18px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', borderBottom: expandedClinic === clinic.id ? '1px solid #EBEBEA' : 'none' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                     <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg, #0A7C6E, #0D9E8D)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🏥</div>
@@ -441,22 +463,18 @@ export default function AdminPage() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <button onClick={e => { e.stopPropagation(); setConfirmDelete({ type: 'clinic', id: clinic.id, label: clinic.name }) }} style={{ padding: '6px 12px', background: '#FFF5F5', border: '1px solid #FEB2B2', borderRadius: 7, color: '#C53030', fontFamily: 'Syne, sans-serif', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                      🗑 Supprimer
-                    </button>
+                    <button onClick={e => { e.stopPropagation(); setConfirmDelete({ type: 'clinic', id: clinic.id, label: clinic.name }) }} style={{ padding: '6px 12px', background: '#FFF5F5', border: '1px solid #FEB2B2', borderRadius: 7, color: '#C53030', fontFamily: 'Syne, sans-serif', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>🗑 Supprimer</button>
                     <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#F5F5F3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#5C5C59', transform: expandedClinic === clinic.id ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</div>
                   </div>
                 </div>
 
-                {/* Contenu déplié */}
                 {expandedClinic === clinic.id && (
                   <div style={{ padding: '24px' }}>
-
-                    {/* Infos clinique */}
                     <div style={{ background: '#F5F5F3', borderRadius: 12, padding: '20px', marginBottom: 24 }}>
                       <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 12, fontWeight: 700, color: '#9E9E9B', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 14 }}>Informations de la clinique</div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
                         {[
+                          { label: 'Identifiant clinique', value: clinic.id, mono: true },
                           { label: 'Propriétaire', value: clinic.owner ? `${clinic.owner.first_name ?? ''} ${clinic.owner.last_name ?? ''}`.trim() || '—' : '—' },
                           { label: 'Email', value: clinic.email || '—' },
                           { label: 'Téléphone', value: clinic.phone || '—' },
@@ -464,15 +482,19 @@ export default function AdminPage() {
                           { label: 'Horaires', value: clinic.opening_hours || '—' },
                           { label: 'Type', value: clinic.clinic_type || '—' },
                         ].map(item => (
-                          <div key={item.label}>
+                          <div key={item.label} style={item.label === 'Identifiant clinique' ? { gridColumn: '1 / -1' } : {}}>
                             <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, color: '#9E9E9B', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 4 }}>{item.label}</div>
-                            <div style={{ fontSize: 14, color: '#141412', fontWeight: 500 }}>{item.value}</div>
+                            <div style={{ fontSize: (item as any).mono ? 12 : 14, color: '#141412', fontWeight: 500, fontFamily: (item as any).mono ? 'monospace' : 'inherit', background: (item as any).mono ? '#EBEBEA' : 'transparent', padding: (item as any).mono ? '6px 10px' : '0', borderRadius: (item as any).mono ? 6 : 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                              {item.value}
+                              {(item as any).mono && (
+                                <button onClick={() => { navigator.clipboard.writeText(item.value); showToast('ID copié ✓') }} style={{ padding: '3px 8px', background: '#0A7C6E', border: 'none', borderRadius: 5, color: 'white', fontSize: 11, fontFamily: 'Syne, sans-serif', fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>Copier</button>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    {/* Membres */}
                     <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 12, fontWeight: 700, color: '#9E9E9B', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 12 }}>Membres ({clinic.members?.length ?? 0})</div>
                     {!clinic.members?.length ? (
                       <div style={{ fontSize: 13, color: '#9E9E9B', padding: '20px 0' }}>Aucun membre</div>
@@ -508,9 +530,7 @@ export default function AdminPage() {
                                   <span style={{ fontSize: 12, fontWeight: 600, color: member.has_paid ? '#0A7C6E' : '#9E9E9B', fontFamily: 'Syne, sans-serif' }}>{member.has_paid ? '✅ ON' : '❌ OFF'}</span>
                                 </td>
                                 <td style={{ padding: '12px' }}>
-                                  <button onClick={() => setConfirmDelete({ type: 'user', id: member.id, label: fullName })} style={{ padding: '5px 10px', background: '#FFF5F5', border: '1px solid #FEB2B2', borderRadius: 7, color: '#C53030', fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
-                                    🗑 Supprimer
-                                  </button>
+                                  <button onClick={() => setConfirmDelete({ type: 'user', id: member.id, label: fullName })} style={{ padding: '5px 10px', background: '#FFF5F5', border: '1px solid #FEB2B2', borderRadius: 7, color: '#C53030', fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>🗑</button>
                                 </td>
                               </tr>
                             )
