@@ -31,6 +31,19 @@ type Clinic = {
   members?: Profile[]
 }
 
+type ClinicConfig = {
+  clinic_name: string | null
+  address: string | null
+  phone: string | null
+  email: string | null
+  hours: string | null
+  clinic_type: string | null
+  transfert_enabled: boolean
+  transfert_number: string | null
+  duree_rdv: number | null
+  buffer_rdv: number | null
+}
+
 type Filter = 'all' | 'active' | 'blocked'
 type Tab = 'users' | 'clinics'
 type SortOption = 'name' | 'date_asc' | 'date_desc'
@@ -74,6 +87,8 @@ export default function AdminPage() {
   const [showUserForm, setShowUserForm] = useState(false)
   const [userForm, setUserForm] = useState<UserForm>({ email: '', password: '', first_name: '', last_name: '', role: 'client' })
   const [userLoading, setUserLoading] = useState(false)
+  const [configPopup, setConfigPopup] = useState<{ clinicName: string; config: ClinicConfig } | null>(null)
+  const [configLoading, setConfigLoading] = useState(false)
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type })
@@ -125,6 +140,29 @@ export default function AdminPage() {
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [loadProfiles, loadClinics])
+
+  const openConfigPopup = async (clinic: Clinic) => {
+    if (!clinic.owner_user_id) { showToast('Aucun propriétaire pour cette clinique.', 'error'); return }
+    setConfigLoading(true)
+    const { data } = await supabase.from('clinic_config').select('*').eq('user_id', clinic.owner_user_id).single()
+    setConfigLoading(false)
+    if (!data) { showToast('Aucune configuration renseignée.', 'error'); return }
+    setConfigPopup({
+      clinicName: clinic.name,
+      config: {
+        clinic_name: data.clinic_name,
+        address: data.address,
+        phone: data.phone,
+        email: data.email,
+        hours: data.hours,
+        clinic_type: data.clinic_type,
+        transfert_enabled: data.transfert_enabled,
+        transfert_number: data.transfert_number,
+        duree_rdv: data.duree_rdv,
+        buffer_rdv: data.buffer_rdv,
+      }
+    })
+  }
 
   const toggleAccess = async (profile: Profile) => {
     const newValue = !profile.has_paid
@@ -227,6 +265,72 @@ export default function AdminPage() {
       {toast && (
         <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 9999, background: toast.type === 'success' ? '#0A7C6E' : '#C53030', color: 'white', padding: '12px 20px', borderRadius: 10, fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 600, boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
           {toast.message}
+        </div>
+      )}
+
+      {/* Popup configuration clinique */}
+      {configPopup && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div style={{ background: 'white', borderRadius: 16, padding: 32, maxWidth: 600, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 18, fontWeight: 800, color: '#141412' }}>⚙️ Configuration — {configPopup.clinicName}</div>
+              <button onClick={() => setConfigPopup(null)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#9E9E9B' }}>✕</button>
+            </div>
+
+            {/* Infos clinique */}
+            <div style={{ background: '#F5F5F3', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, color: '#9E9E9B', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 14 }}>🏥 Informations de la clinique</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                {[
+                  { label: 'Nom', value: configPopup.config.clinic_name },
+                  { label: 'Type', value: configPopup.config.clinic_type },
+                  { label: 'Adresse', value: configPopup.config.address },
+                  { label: 'Horaires', value: configPopup.config.hours },
+                  { label: 'Téléphone', value: configPopup.config.phone },
+                  { label: 'Email', value: configPopup.config.email },
+                ].map(item => (
+                  <div key={item.label}>
+                    <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, color: '#9E9E9B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{item.label}</div>
+                    <div style={{ fontSize: 14, color: '#141412', fontWeight: 500 }}>{item.value || '—'}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Agent téléphonique */}
+            <div style={{ background: '#F5F5F3', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, color: '#9E9E9B', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 14 }}>📞 Agent téléphonique</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: configPopup.config.transfert_enabled ? 12 : 0 }}>
+                <div style={{ fontSize: 14, color: '#141412', fontWeight: 500 }}>Transfert vers un humain</div>
+                <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 100, fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, background: configPopup.config.transfert_enabled ? '#E8F5F3' : '#F5F5F3', color: configPopup.config.transfert_enabled ? '#0A7C6E' : '#9E9E9B', border: configPopup.config.transfert_enabled ? '1px solid #0A7C6E' : '1px solid #EBEBEA' }}>
+                  {configPopup.config.transfert_enabled ? '✅ Activé' : '❌ Désactivé'}
+                </span>
+              </div>
+              {configPopup.config.transfert_enabled && configPopup.config.transfert_number && (
+                <div>
+                  <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, color: '#9E9E9B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Numéro de transfert</div>
+                  <div style={{ fontSize: 14, color: '#141412', fontWeight: 500 }}>{configPopup.config.transfert_number}</div>
+                </div>
+              )}
+            </div>
+
+            {/* Agent agenda */}
+            <div style={{ background: '#F5F5F3', borderRadius: 12, padding: 20 }}>
+              <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, color: '#9E9E9B', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 14 }}>📅 Agent agenda</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div>
+                  <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, color: '#9E9E9B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Durée par défaut d'un RDV</div>
+                  <div style={{ fontSize: 14, color: '#141412', fontWeight: 500 }}>{configPopup.config.duree_rdv ? `${configPopup.config.duree_rdv} min` : '—'}</div>
+                </div>
+                <div>
+                  <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, color: '#9E9E9B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Buffer entre deux RDV</div>
+                  <div style={{ fontSize: 14, color: '#141412', fontWeight: 500 }}>{configPopup.config.buffer_rdv !== null ? `${configPopup.config.buffer_rdv} min` : '—'}</div>
+                </div>
+              </div>
+            </div>
+
+            <button onClick={() => setConfigPopup(null)} style={{ marginTop: 24, padding: '12px 24px', background: '#0A7C6E', border: 'none', borderRadius: 9, color: 'white', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, cursor: 'pointer', width: '100%' }}>Fermer</button>
+          </div>
         </div>
       )}
 
@@ -463,6 +567,9 @@ export default function AdminPage() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <button onClick={e => { e.stopPropagation(); openConfigPopup(clinic) }} disabled={configLoading} style={{ padding: '6px 12px', background: '#F0FDF8', border: '1px solid #0A7C6E', borderRadius: 7, color: '#0A7C6E', fontFamily: 'Syne, sans-serif', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                      ⚙️ Configuration
+                    </button>
                     <button onClick={e => { e.stopPropagation(); setConfirmDelete({ type: 'clinic', id: clinic.id, label: clinic.name }) }} style={{ padding: '6px 12px', background: '#FFF5F5', border: '1px solid #FEB2B2', borderRadius: 7, color: '#C53030', fontFamily: 'Syne, sans-serif', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>🗑 Supprimer</button>
                     <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#F5F5F3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#5C5C59', transform: expandedClinic === clinic.id ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</div>
                   </div>
