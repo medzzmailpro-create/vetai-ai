@@ -68,7 +68,7 @@ export default function AdminPage() {
       return
     }
 
-    const clinicIds = [...new Set((data ?? []).map((p: any) => p.clinic_id).filter(Boolean))]
+    const clinicIds = Array.from(new Set((data ?? []).map((p: any) => p.clinic_id).filter(Boolean)))
     let clinicMap: Record<string, string> = {}
 
     if (clinicIds.length > 0) {
