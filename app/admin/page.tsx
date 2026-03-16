@@ -1,45 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-export async function POST(req: Request) {
-  const { email, password, first_name, last_name, role } = await req.json()
-
-  // Créer l'utilisateur dans auth
-  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-  })
-
-  if (authError) {
-    return NextResponse.json({ error: authError.message }, { status: 400 })
-  }
-
-  // Créer le profil
-  const { error: profileError } = await supabaseAdmin
-    .from('profiles')
-    .insert({
-      id: authData.user.id,
-      email,
-      first_name,
-      last_name,
-      role: role ?? 'client',
-      has_paid: false,
-    })
-
-  if (profileError) {
-    return NextResponse.json({ error: profileError.message }, { status: 400 })
-  }
-
-  return NextResponse.json({ success: true })
-}
-2. Ensuite dis-moi et je t'enverrai le code du formulaire à ajouter dans /admin pour appeler cette route.jai mis21:36Maintenant voici le code complet de /admin avec le formulaire de création d'utilisateur intégré. Remplace tout ton fichier :
-tsx'use client'
+'use client'
 
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
