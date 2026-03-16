@@ -292,7 +292,7 @@ export default function ConfigurationPage({ config, onConfigChange, userId }: Pr
         transfert_number: transfertNumber, duree_rdv: dureeRdv,
         buffer_rdv: bufferRdv, setup_done: true,
         updated_at: new Date().toISOString(),
-      })
+      }, { onConflict: 'user_id' })
       if (cfgErr) errors.push(cfgErr.message)
 
       if (errors.length) {
