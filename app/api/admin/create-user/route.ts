@@ -9,7 +9,7 @@ const supabaseAdmin = createClient(
 export async function POST(req: Request) {
   const { email, password, first_name, last_name, role } = await req.json()
 
-  // Créer l'utilisateur dans auth
+  // Créer l'utilisateur dans auth (le trigger créera le profil automatiquement)
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
@@ -20,17 +20,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: authError.message }, { status: 400 })
   }
 
-  // Créer le profil
+  // Mettre à jour le profil créé par le trigger avec les infos supplémentaires
   const { error: profileError } = await supabaseAdmin
     .from('profiles')
-    .insert({
-      id: authData.user.id,
-      email,
+    .update({
       first_name,
       last_name,
       role: role ?? 'client',
-      has_paid: false,
     })
+    .eq('id', authData.user.id)
 
   if (profileError) {
     return NextResponse.json({ error: profileError.message }, { status: 400 })
