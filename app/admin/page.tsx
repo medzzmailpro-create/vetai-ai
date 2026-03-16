@@ -349,8 +349,7 @@ export default function AdminPage() {
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
           {([['users', '👥 Utilisateurs'], ['clinics', '🏥 Cliniques']] as const).map(([t, label]) => (
-            <button key={t} onClick={() => setTab(t)} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, background: tab === t ? '#0A7C6E' : 'white', color: tab === t ? 'white' : '#5C5C59', border: tab === t ? 'none' : '1.5px solid #EBEBEA' }}>
-              {label}
+            <button key={t} onClick={() => setTab(t)} style={{ padding: '10px 20px', borderRadius: 10, border: tab === t ? 'none' : '1.5px solid #EBEBEA', cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, background: tab === t ? '#0A7C6E' : 'white', color: tab === t ? 'white' : '#5C5C59' }}>              {label}
             </button>
           ))}
         </div>
