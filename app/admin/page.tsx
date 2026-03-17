@@ -65,6 +65,8 @@ type UserForm = {
   role: 'client' | 'support'
 }
 
+const CLINIC_TYPES = ['Vétérinaire généraliste', "Clinique d'urgence", 'Clinique spécialisée', 'Autre']
+
 export default function AdminPage() {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('users')
@@ -87,7 +89,7 @@ export default function AdminPage() {
   const [showUserForm, setShowUserForm] = useState(false)
   const [userForm, setUserForm] = useState<UserForm>({ email: '', password: '', first_name: '', last_name: '', role: 'client' })
   const [userLoading, setUserLoading] = useState(false)
-  const [configPopup, setConfigPopup] = useState<{ clinicName: string; config: ClinicConfig; configUserId: string } | null>(null)
+  const [configPopup, setConfigPopup] = useState<{ clinicName: string; clinicId: string; config: ClinicConfig; configUserId: string } | null>(null)
   const [configLoading, setConfigLoading] = useState(false)
   const [editConfig, setEditConfig] = useState<ClinicConfig | null>(null)
   const [savingConfig, setSavingConfig] = useState(false)
@@ -167,23 +169,47 @@ export default function AdminPage() {
       duree_rdv: data.duree_rdv,
       buffer_rdv: data.buffer_rdv,
     }
-    setConfigPopup({ clinicName: clinic.name, configUserId: data.user_id, config: configData })
+    setConfigPopup({ clinicName: clinic.name, clinicId: clinic.id, configUserId: data.user_id, config: configData })
     setEditConfig(configData)
   }
 
   const handleSaveConfig = async () => {
     if (!configPopup || !editConfig) return
     setSavingConfig(true)
-    const { error } = await supabase.from('clinic_config').update({
+    const errors: string[] = []
+
+    // 1. Mise à jour clinic_config
+    const { error: cfgErr } = await supabase.from('clinic_config').update({
+      clinic_name: editConfig.clinic_name,
+      address: editConfig.address,
+      phone: editConfig.phone,
+      email: editConfig.email,
+      hours: editConfig.hours,
+      clinic_type: editConfig.clinic_type,
       transfert_enabled: editConfig.transfert_enabled,
       transfert_number: editConfig.transfert_number,
       duree_rdv: editConfig.duree_rdv,
       buffer_rdv: editConfig.buffer_rdv,
+      updated_at: new Date().toISOString(),
     }).eq('user_id', configPopup.configUserId)
+    if (cfgErr) errors.push(cfgErr.message)
+
+    // 2. Synchronise aussi la table clinics
+    const { error: clinicErr } = await supabase.from('clinics').update({
+      name: editConfig.clinic_name,
+      address: editConfig.address,
+      phone: editConfig.phone,
+      email: editConfig.email,
+      opening_hours: editConfig.hours,
+      clinic_type: editConfig.clinic_type,
+    }).eq('id', configPopup.clinicId)
+    if (clinicErr) errors.push(clinicErr.message)
+
     setSavingConfig(false)
-    if (error) { showToast('Erreur sauvegarde.', 'error'); return }
+    if (errors.length) { showToast('Erreur sauvegarde.', 'error'); return }
     setConfigPopup(prev => prev ? { ...prev, config: editConfig } : null)
     showToast('Configuration mise à jour ✓', 'success')
+    loadClinics()
   }
 
   const toggleAccess = async (profile: Profile) => {
@@ -290,36 +316,49 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Popup configuration clinique */}
+      {/* ── POPUP CONFIG ── */}
       {configPopup && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <div style={{ background: 'white', borderRadius: 16, padding: 32, maxWidth: 600, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ background: 'white', borderRadius: 16, padding: 32, maxWidth: 640, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
               <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 18, fontWeight: 800, color: '#141412' }}>⚙️ Configuration — {configPopup.clinicName}</div>
               <button onClick={() => setConfigPopup(null)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#9E9E9B' }}>✕</button>
             </div>
 
-            {/* Infos clinique */}
+            {/* 🏥 Infos clinique - MODIFIABLE */}
             <div style={{ background: '#F5F5F3', borderRadius: 12, padding: 20, marginBottom: 16 }}>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, color: '#9E9E9B', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 14 }}>🏥 Informations de la clinique</div>
+              <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, color: '#9E9E9B', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 16 }}>🏥 Informations de la clinique</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                {[
-                  { label: 'Nom', value: configPopup.config.clinic_name },
-                  { label: 'Type', value: configPopup.config.clinic_type },
-                  { label: 'Adresse', value: configPopup.config.address },
-                  { label: 'Horaires', value: configPopup.config.hours },
-                  { label: 'Téléphone', value: configPopup.config.phone },
-                  { label: 'Email', value: configPopup.config.email },
-                ].map(item => (
-                  <div key={item.label}>
-                    <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, color: '#9E9E9B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{item.label}</div>
-                    <div style={{ fontSize: 14, color: '#141412', fontWeight: 500 }}>{item.value || '—'}</div>
-                  </div>
-                ))}
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <div style={labelStyle}>Nom de la clinique</div>
+                  <input style={{ ...inputStyle, marginTop: 6 }} value={editConfig?.clinic_name ?? ''} onChange={e => setEditConfig(c => c ? { ...c, clinic_name: e.target.value } : c)} placeholder="Clinique Vétérinaire du Parc" />
+                </div>
+                <div>
+                  <div style={labelStyle}>Type</div>
+                  <select style={{ ...inputStyle, marginTop: 6 }} value={editConfig?.clinic_type ?? ''} onChange={e => setEditConfig(c => c ? { ...c, clinic_type: e.target.value } : c)}>
+                    {CLINIC_TYPES.map(t => <option key={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <div style={labelStyle}>Téléphone</div>
+                  <input style={{ ...inputStyle, marginTop: 6 }} value={editConfig?.phone ?? ''} onChange={e => setEditConfig(c => c ? { ...c, phone: e.target.value } : c)} placeholder="01 23 45 67 89" />
+                </div>
+                <div>
+                  <div style={labelStyle}>Email</div>
+                  <input style={{ ...inputStyle, marginTop: 6 }} value={editConfig?.email ?? ''} onChange={e => setEditConfig(c => c ? { ...c, email: e.target.value } : c)} placeholder="contact@clinique.fr" />
+                </div>
+                <div>
+                  <div style={labelStyle}>Horaires</div>
+                  <input style={{ ...inputStyle, marginTop: 6 }} value={editConfig?.hours ?? ''} onChange={e => setEditConfig(c => c ? { ...c, hours: e.target.value } : c)} placeholder="Lun–Ven 8h30–19h" />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <div style={labelStyle}>Adresse</div>
+                  <input style={{ ...inputStyle, marginTop: 6 }} value={editConfig?.address ?? ''} onChange={e => setEditConfig(c => c ? { ...c, address: e.target.value } : c)} placeholder="12 rue des Vétérinaires, 75000 Paris" />
+                </div>
               </div>
             </div>
 
-            {/* Agent téléphonique - MODIFIABLE */}
+            {/* 📞 Agent téléphonique - MODIFIABLE */}
             <div style={{ background: '#F5F5F3', borderRadius: 12, padding: 20, marginBottom: 16 }}>
               <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, color: '#9E9E9B', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 14 }}>📞 Agent téléphonique</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -336,7 +375,7 @@ export default function AdminPage() {
               )}
             </div>
 
-            {/* Agent agenda - MODIFIABLE */}
+            {/* 📅 Agent agenda - MODIFIABLE */}
             <div style={{ background: '#F5F5F3', borderRadius: 12, padding: 20, marginBottom: 16 }}>
               <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, color: '#9E9E9B', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 14 }}>📅 Agent agenda</div>
               <div style={{ marginBottom: 16 }}>
@@ -678,7 +717,7 @@ export default function AdminPage() {
             ))}
           </div>
         )}
-        </main>
-      </div>
-    )
-  }
+      </main>
+    </div>
+  )
+}
