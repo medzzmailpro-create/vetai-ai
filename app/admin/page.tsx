@@ -87,8 +87,10 @@ export default function AdminPage() {
   const [showUserForm, setShowUserForm] = useState(false)
   const [userForm, setUserForm] = useState<UserForm>({ email: '', password: '', first_name: '', last_name: '', role: 'client' })
   const [userLoading, setUserLoading] = useState(false)
-  const [configPopup, setConfigPopup] = useState<{ clinicName: string; config: ClinicConfig } | null>(null)
+  const [configPopup, setConfigPopup] = useState<{ clinicName: string; config: ClinicConfig; configUserId: string } | null>(null)
   const [configLoading, setConfigLoading] = useState(false)
+  const [editConfig, setEditConfig] = useState<ClinicConfig | null>(null)
+  const [savingConfig, setSavingConfig] = useState(false)
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type })
@@ -156,22 +158,24 @@ const { data } = await supabase
   .single()
     setConfigLoading(false)
     if (!data) { showToast('Aucune configuration renseignée.', 'error'); return }
+    const configData = {
+      clinic_name: data.clinic_name,
+      address: data.address,
+      phone: data.phone,
+      email: data.email,
+      hours: data.hours,
+      clinic_type: data.clinic_type,
+      transfert_enabled: data.transfert_enabled,
+      transfert_number: data.transfert_number,
+      duree_rdv: data.duree_rdv,
+      buffer_rdv: data.buffer_rdv,
+    }
     setConfigPopup({
       clinicName: clinic.name,
-      config: {
-        clinic_name: data.clinic_name,
-        address: data.address,
-        phone: data.phone,
-        email: data.email,
-        hours: data.hours,
-        clinic_type: data.clinic_type,
-        transfert_enabled: data.transfert_enabled,
-        transfert_number: data.transfert_number,
-        duree_rdv: data.duree_rdv,
-        buffer_rdv: data.buffer_rdv,
-      }
+      configUserId: data.user_id,
+      config: configData,
     })
-  }
+    setEditConfig(configData)
 
   const toggleAccess = async (profile: Profile) => {
     const newValue = !profile.has_paid
