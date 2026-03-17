@@ -48,7 +48,13 @@
       "Bash(find /d/SaaS/zip/cliniko -type f -name .env* -o -name *.env)",
       "Bash(find /d/SaaS/zip/cliniko -type f -name *.ts -o -name *.tsx)",
       "Bash(grep -r \"eyJ\\\\|SERVICE_ROLE\" /d/SaaS/zip/cliniko --include=*.ts --include=*.tsx)",
-      "Bash(xargs ls:*)"
+      "Bash(xargs ls:*)",
+      "mcp__claude_ai_Supabase__execute_sql",
+      "Bash(find /d/SaaS/zip/cliniko/components/dashboard/pages -name \"*.tsx\" | xargs basename -a)",
+      "Bash(find /d/SaaS/zip/cliniko/app -name \"*.tsx\" | xargs grep -l \"contact\\\\|mentions\\\\|privacy\\\\|cgu\\\\|rgpd\\\\|security\" 2>/dev/null)",
+      "Bash(find /d/SaaS/zip/cliniko/lib -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) | xargs wc -l | sort -n)",
+      "Bash(grep -r \"sk-\\\\|api_key\\\\|secret\\\\|token\\\\|password\" /d/SaaS/zip/cliniko/app --include=\"*.tsx\" --include=\"*.ts\" 2>/dev/null | grep -v \"node_modules\\\\|.next\" | head -20)",
+      "mcp__claude_ai_Supabase__apply_migration"
     ]
   }
 }

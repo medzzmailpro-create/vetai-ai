@@ -49,11 +49,13 @@ export default function RegisterPage() {
     setError('')
     setLoading(true)
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? (typeof window !== 'undefined' ? window.location.origin : '')
     const { error: authError } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password,
       options: {
         data: { prenom: prenom.trim(), nom: nom.trim() },
+        emailRedirectTo: `${siteUrl}/auth/callback`,
       },
     })
 

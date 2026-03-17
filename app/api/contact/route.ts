@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
           Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from: 'Vetai.AI <noreply@cliniko.app>',
+          from: 'Vetai <noreply@vetai.fr>',
           to: [notifyEmail],
           subject: `Nouvelle demande : ${prenom.trim()} — ${clinique?.trim() ?? ''}`,
           text: `Nouvelle demande de démo Vetai.AI\n\n${subject}\n\n${ticketMessage}`,

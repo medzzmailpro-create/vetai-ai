@@ -59,7 +59,7 @@ const SECTIONS = ['perso', 'clinique', 'infos', 'agent', 'agenda']
 
 function getInitialOpen() {
   try {
-    const saved = localStorage.getItem('cliniko_config_accordion')
+    const saved = localStorage.getItem('vetai_config_accordion')
     if (saved) return JSON.parse(saved) as Record<string, boolean>
   } catch { }
   return Object.fromEntries(SECTIONS.map(s => [s, true]))
@@ -73,7 +73,7 @@ export default function ConfigurationPage({ config, onConfigChange, userId }: Pr
   const toggleSection = (id: string) => {
     setOpen(prev => {
       const next = { ...prev, [id]: !prev[id] }
-      try { localStorage.setItem('cliniko_config_accordion', JSON.stringify(next)) } catch { }
+      try { localStorage.setItem('vetai_config_accordion', JSON.stringify(next)) } catch { }
       return next
     })
   }

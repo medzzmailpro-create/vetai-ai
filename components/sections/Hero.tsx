@@ -76,7 +76,7 @@ export default function Hero() {
               <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#FF5F57' }} />
               <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#FFBD2E' }} />
               <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#28C840' }} />
-              <span style={{ flex: 1, fontSize: 11, color: '#9E9E9B', textAlign: 'center', fontFamily: 'Syne, sans-serif' }}>dashboard.cliniko.fr</span>
+              <span style={{ flex: 1, fontSize: 11, color: '#9E9E9B', textAlign: 'center', fontFamily: 'Syne, sans-serif' }}>dashboard.vetai.fr</span>
             </div>
             <div style={{ background: '#0A7C6E', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, color: 'white' }}>🏥 Clinique du Parc · Tableau de bord</span>

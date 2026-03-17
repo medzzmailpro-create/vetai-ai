@@ -23,10 +23,13 @@ export default function Footer() {
           {/* Col 1 — Brand */}
           <div>
             <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 24, fontWeight: 800, color: 'white', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-              Vetai.AI<div style={{ width: 8, height: 8, background: '#F5A623', borderRadius: '50%' }} />
+              Vetai<div style={{ width: 8, height: 8, background: '#F5A623', borderRadius: '50%' }} />
             </div>
             <p style={{ fontSize: 14, lineHeight: 1.7, marginBottom: 12 }}>
               L'assistant IA vétérinaire qui automatise vos communications et libère votre équipe pour soigner.
+            </p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>
+              {CONTACT_EMAIL}
             </p>
           </div>
 
@@ -35,10 +38,8 @@ export default function Footer() {
             <h4 style={{ fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, color: 'white', marginBottom: 16 }}>Produit</h4>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
               <FooterLink href="#agents" label="Fonctionnalités" />
-              <FooterLink href="#integrations" label="Intégrations" />
               <FooterLink href="#how" label="Comment ça marche" />
-              <FooterLink href="#securite" label="Sécurité & RGPD" />
-              <FooterLink href="#roi" label="Calculateur ROI" />
+              <FooterLink href="/security-rgpd" label="Sécurité & RGPD" />
             </ul>
           </div>
 
@@ -46,11 +47,9 @@ export default function Footer() {
           <div>
             <h4 style={{ fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, color: 'white', marginBottom: 16 }}>Tarifs</h4>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <FooterLink href="#pricing" label="Starter" />
-              <FooterLink href="#pricing" label="Pro" />
-              <FooterLink href="#pricing" label="Enterprise" />
-              <FooterLink href="#pilote" label="Programme Pilote" />
-              <FooterLink href="#contact" label="Demander une démo" />
+              <FooterLink href="/pricing" label="La Sentinelle" />
+              <FooterLink href="/pricing" label="Programme Pilote" />
+              <FooterLink href="/pricing" label="Demander une démo" />
             </ul>
           </div>
 
@@ -58,10 +57,10 @@ export default function Footer() {
           <div>
             <h4 style={{ fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, color: 'white', marginBottom: 16 }}>Légal</h4>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <FooterLink href="#" label="Mentions légales" />
-              <FooterLink href="#" label="Politique de confidentialité" />
-              <FooterLink href="#" label="RGPD / DPA" />
-              <FooterLink href="#" label="CGU / CGV" />
+              <FooterLink href="/mentions-legales" label="Mentions légales" />
+              <FooterLink href="/privacy" label="Politique de confidentialité" />
+              <FooterLink href="/rgpd-dpa" label="RGPD / DPA" />
+              <FooterLink href="/cgu-cgv" label="CGU / CGV" />
             </ul>
             <div style={{ marginTop: 20, fontSize: 12, color: 'rgba(255,255,255,0.3)', lineHeight: 1.6 }}>
               🔒 Données hébergées en France<br />⚖️ Conforme RGPD
@@ -70,10 +69,14 @@ export default function Footer() {
         </div>
 
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-          <p style={{ fontSize: 13 }}>© 2026 Vetai.AI. Tous droits réservés.</p>
+          <p style={{ fontSize: 13 }}>© 2026 Vetai. Tous droits réservés.</p>
           <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-            {['Mentions légales', 'Politique de confidentialité', 'CGU / CGV'].map(l => (
-              <a key={l} href="#" style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>{l}</a>
+            {[
+              { label: 'Mentions légales', href: '/mentions-legales' },
+              { label: 'Politique de confidentialité', href: '/privacy' },
+              { label: 'CGU / CGV', href: '/cgu-cgv' },
+            ].map(l => (
+              <a key={l.label} href={l.href} style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>{l.label}</a>
             ))}
           </div>
         </div>
