@@ -144,21 +144,18 @@ export default function AdminPage() {
   }, [loadProfiles, loadClinics])
 
   const openConfigPopup = async (clinic: Clinic) => {
-    if (!clinic.owner_user_id) { showToast('Aucun propriétaire pour cette clinique.', 'error'); return }
     setConfigLoading(true)
-    // Cherche la config parmi tous les membres de la clinique
-const memberIds = clinic.members?.map(m => m.id) ?? []
-if (clinic.owner_user_id) memberIds.push(clinic.owner_user_id)
-
-const { data } = await supabase
-  .from('clinic_config')
-  .select('*')
-  .in('user_id', memberIds)
-  .limit(1)
-  .single()
+    const memberIds = clinic.members?.map(m => m.id) ?? []
+    if (clinic.owner_user_id) memberIds.push(clinic.owner_user_id)
+    const { data } = await supabase
+      .from('clinic_config')
+      .select('*')
+      .in('user_id', memberIds)
+      .limit(1)
+      .single()
     setConfigLoading(false)
     if (!data) { showToast('Aucune configuration renseignée.', 'error'); return }
-    const configData = {
+    const configData: ClinicConfig = {
       clinic_name: data.clinic_name,
       address: data.address,
       phone: data.phone,
@@ -170,12 +167,24 @@ const { data } = await supabase
       duree_rdv: data.duree_rdv,
       buffer_rdv: data.buffer_rdv,
     }
-    setConfigPopup({
-      clinicName: clinic.name,
-      configUserId: data.user_id,
-      config: configData,
-    })
+    setConfigPopup({ clinicName: clinic.name, configUserId: data.user_id, config: configData })
     setEditConfig(configData)
+  }
+
+  const handleSaveConfig = async () => {
+    if (!configPopup || !editConfig) return
+    setSavingConfig(true)
+    const { error } = await supabase.from('clinic_config').update({
+      transfert_enabled: editConfig.transfert_enabled,
+      transfert_number: editConfig.transfert_number,
+      duree_rdv: editConfig.duree_rdv,
+      buffer_rdv: editConfig.buffer_rdv,
+    }).eq('user_id', configPopup.configUserId)
+    setSavingConfig(false)
+    if (error) { showToast('Erreur sauvegarde.', 'error'); return }
+    setConfigPopup(prev => prev ? { ...prev, config: editConfig } : null)
+    showToast('Configuration mise à jour ✓', 'success')
+  }
 
   const toggleAccess = async (profile: Profile) => {
     const newValue = !profile.has_paid
@@ -310,39 +319,44 @@ const { data } = await supabase
               </div>
             </div>
 
-            {/* Agent téléphonique */}
+            {/* Agent téléphonique - MODIFIABLE */}
             <div style={{ background: '#F5F5F3', borderRadius: 12, padding: 20, marginBottom: 16 }}>
               <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, color: '#9E9E9B', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 14 }}>📞 Agent téléphonique</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: configPopup.config.transfert_enabled ? 12 : 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <div style={{ fontSize: 14, color: '#141412', fontWeight: 500 }}>Transfert vers un humain</div>
-                <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 100, fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, background: configPopup.config.transfert_enabled ? '#E8F5F3' : '#F5F5F3', color: configPopup.config.transfert_enabled ? '#0A7C6E' : '#9E9E9B', border: configPopup.config.transfert_enabled ? '1px solid #0A7C6E' : '1px solid #EBEBEA' }}>
-                  {configPopup.config.transfert_enabled ? '✅ Activé' : '❌ Désactivé'}
-                </span>
+                <div onClick={() => setEditConfig(e => e ? { ...e, transfert_enabled: !e.transfert_enabled } : e)} style={{ width: 42, height: 22, borderRadius: 11, background: editConfig?.transfert_enabled ? '#0A7C6E' : '#D4D4D2', position: 'relative', cursor: 'pointer', flexShrink: 0, transition: 'background 0.2s' }}>
+                  <div style={{ position: 'absolute', top: 2, left: editConfig?.transfert_enabled ? 22 : 2, width: 18, height: 18, background: 'white', borderRadius: '50%', transition: 'left 0.2s' }} />
+                </div>
               </div>
-              {configPopup.config.transfert_enabled && configPopup.config.transfert_number && (
+              {editConfig?.transfert_enabled && (
                 <div>
-                  <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, color: '#9E9E9B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Numéro de transfert</div>
-                  <div style={{ fontSize: 14, color: '#141412', fontWeight: 500 }}>{configPopup.config.transfert_number}</div>
+                  <div style={labelStyle}>Numéro de transfert</div>
+                  <input style={{ ...inputStyle, marginTop: 6 }} value={editConfig?.transfert_number ?? ''} onChange={e => setEditConfig(cfg => cfg ? { ...cfg, transfert_number: e.target.value } : cfg)} placeholder="06 12 34 56 78" />
                 </div>
               )}
             </div>
 
-            {/* Agent agenda */}
-            <div style={{ background: '#F5F5F3', borderRadius: 12, padding: 20 }}>
+            {/* Agent agenda - MODIFIABLE */}
+            <div style={{ background: '#F5F5F3', borderRadius: 12, padding: 20, marginBottom: 16 }}>
               <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, color: '#9E9E9B', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 14 }}>📅 Agent agenda</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                <div>
-                  <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, color: '#9E9E9B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Durée par défaut d'un RDV</div>
-                  <div style={{ fontSize: 14, color: '#141412', fontWeight: 500 }}>{configPopup.config.duree_rdv ? `${configPopup.config.duree_rdv} min` : '—'}</div>
-                </div>
-                <div>
-                  <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, color: '#9E9E9B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Buffer entre deux RDV</div>
-                  <div style={{ fontSize: 14, color: '#141412', fontWeight: 500 }}>{configPopup.config.buffer_rdv !== null ? `${configPopup.config.buffer_rdv} min` : '—'}</div>
-                </div>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ ...labelStyle, marginBottom: 6 }}>Durée par défaut d'un RDV : <strong style={{ color: '#0A7C6E' }}>{editConfig?.duree_rdv} min</strong></div>
+                <input type="range" min={10} max={60} step={5} value={editConfig?.duree_rdv ?? 20} onChange={e => setEditConfig(cfg => cfg ? { ...cfg, duree_rdv: Number(e.target.value) } : cfg)} style={{ width: '100%', accentColor: '#0A7C6E' }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9E9E9B', marginTop: 4 }}><span>10 min</span><span>60 min</span></div>
+              </div>
+              <div>
+                <div style={{ ...labelStyle, marginBottom: 6 }}>Buffer entre deux RDV : <strong style={{ color: '#0A7C6E' }}>{editConfig?.buffer_rdv} min</strong></div>
+                <input type="range" min={0} max={30} step={5} value={editConfig?.buffer_rdv ?? 5} onChange={e => setEditConfig(cfg => cfg ? { ...cfg, buffer_rdv: Number(e.target.value) } : cfg)} style={{ width: '100%', accentColor: '#0A7C6E' }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9E9E9B', marginTop: 4 }}><span>0 min</span><span>30 min</span></div>
               </div>
             </div>
 
-            <button onClick={() => setConfigPopup(null)} style={{ marginTop: 24, padding: '12px 24px', background: '#0A7C6E', border: 'none', borderRadius: 9, color: 'white', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, cursor: 'pointer', width: '100%' }}>Fermer</button>
+            <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+              <button onClick={handleSaveConfig} disabled={savingConfig} style={{ flex: 1, padding: '12px', background: savingConfig ? '#D4D4D2' : '#0A7C6E', border: 'none', borderRadius: 9, color: 'white', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, cursor: savingConfig ? 'not-allowed' : 'pointer' }}>
+                {savingConfig ? 'Enregistrement…' : '💾 Enregistrer'}
+              </button>
+              <button onClick={() => setConfigPopup(null)} style={{ padding: '12px 20px', background: 'none', border: '1.5px solid #D4D4D2', borderRadius: 9, fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 600, color: '#5C5C59', cursor: 'pointer' }}>Fermer</button>
+            </div>
           </div>
         </div>
       )}
@@ -664,7 +678,7 @@ const { data } = await supabase
             ))}
           </div>
         )}
-      </main>
-    </div>
-  )
-}
+        </main>
+      </div>
+    )
+  }
