@@ -2,8 +2,8 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Bienvenue dans Vetai.AI — Votre commande est confirmée',
-  description: 'Votre accès à Vetai.AI est en cours de configuration. Notre équipe vous contacte sous 24h.',
+  title: 'Bienvenue dans Vetai — Votre commande est confirmée',
+  description: 'Votre accès à Vetai est en cours de configuration. Notre équipe vous contacte sous 24h.',
 }
 
 export default function MerciPage() {
@@ -18,7 +18,7 @@ export default function MerciPage() {
 
         {/* Logo */}
         <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 22, fontWeight: 800, color: '#0A7C6E', display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 32 }}>
-          Vetai.AI
+          Vetai
           <div style={{ width: 7, height: 7, background: '#F5A623', borderRadius: '50%' }} />
         </div>
 
@@ -38,7 +38,7 @@ export default function MerciPage() {
           fontFamily: 'Syne, sans-serif', fontSize: 'clamp(26px, 4vw, 36px)',
           fontWeight: 800, color: '#141412', lineHeight: 1.2, marginBottom: 16,
         }}>
-          Bienvenue dans Vetai.AI ! 🎉
+          Bienvenue dans Vetai ! 🎉
         </h1>
 
         {/* Sous-titre */}

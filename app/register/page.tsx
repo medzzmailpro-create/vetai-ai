@@ -89,7 +89,7 @@ export default function RegisterPage() {
           textAlign: 'center',
         }}>
           <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 26, fontWeight: 800, color: '#0A7C6E', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 28, justifyContent: 'center' }}>
-            Vetai.AI<div style={{ width: 8, height: 8, background: '#F5A623', borderRadius: '50%' }} />
+            Vetai<div style={{ width: 8, height: 8, background: '#F5A623', borderRadius: '50%' }} />
           </div>
           <div style={{ fontSize: 40, marginBottom: 16 }}>📬</div>
           <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 20, fontWeight: 800, color: '#141412', marginBottom: 12 }}>
@@ -127,7 +127,7 @@ export default function RegisterPage() {
 
         {/* Logo */}
         <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 26, fontWeight: 800, color: '#0A7C6E', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-          Vetai.AI<div style={{ width: 8, height: 8, background: '#F5A623', borderRadius: '50%' }} />
+          Vetai<div style={{ width: 8, height: 8, background: '#F5A623', borderRadius: '50%' }} />
         </div>
         <p style={{ fontSize: 14, color: '#9E9E9B', marginBottom: 28 }}>Créez votre compte et choisissez votre offre</p>
 

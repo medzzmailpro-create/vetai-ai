@@ -355,7 +355,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
             </div>
           )}
 
-          {page === 'equipe' && <EquipePage clinicId={clinicId} />}
+          {page === 'equipe' && <EquipePage clinicId={clinicId} userId={userId} userRole={userRole} />}
           {page === 'securite' && <SecurityPage />}
 
           {page === 'configuration' && (

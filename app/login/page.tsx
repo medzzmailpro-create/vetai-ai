@@ -132,7 +132,7 @@ export default function LoginPage() {
 
         {/* Logo */}
         <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 26, fontWeight: 800, color: '#0A7C6E', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-          Vetai.AI<div style={{ width: 8, height: 8, background: '#F5A623', borderRadius: '50%' }} />
+          Vetai<div style={{ width: 8, height: 8, background: '#F5A623', borderRadius: '50%' }} />
         </div>
 
         {/* ── VUE MOT DE PASSE OUBLIÉ ── */}

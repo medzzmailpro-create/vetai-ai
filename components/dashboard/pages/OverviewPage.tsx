@@ -117,6 +117,8 @@ export default function OverviewPage({
 
   const [comparison, setComparison] = useState<Comparison>(MOCK_COMPARISON[period])
   const [kpiLoading, setKpiLoading] = useState(false)
+  const [liveKpiValues, setLiveKpiValues] = useState<Record<KpiKey, string>>({ revenue: '—', time: '—', noShows: '—', missed: '—' })
+  const [agentStatusMap, setAgentStatusMap] = useState<Record<string, boolean>>({})
 
   // Today's appointments from Supabase
   const [todayAppointments, setTodayAppointments] = useState<AppointmentRow[]>([])
@@ -264,6 +266,12 @@ export default function OverviewPage({
         noShows: calcPct(curr.noShows, prev.noShows),
         missed: calcPct(curr.missed, prev.missed),
       })
+      setLiveKpiValues({
+        revenue: curr.revenue > 0 ? `${curr.revenue}€` : '0€',
+        time: curr.time > 0 ? `${Math.round(curr.time / 360000) / 10} h` : '0 h',
+        noShows: `${curr.noShows}`,
+        missed: `${curr.missed}`,
+      })
     } catch {
       setComparison(MOCK_COMPARISON[period])
     } finally {
@@ -272,6 +280,20 @@ export default function OverviewPage({
   }, [period, customStart, customEnd, clinicId, isDemo])
 
   useEffect(() => { fetchComparison() }, [fetchComparison])
+
+  // Load agent statuses from clinic_agents
+  useEffect(() => {
+    if (isDemo || !clinicId) return
+    supabase.from('clinic_agents').select('agent_type, is_enabled')
+      .eq('clinic_id', clinicId)
+      .then(({ data }) => {
+        if (data) {
+          const map: Record<string, boolean> = {}
+          data.forEach((a: { agent_type: string; is_enabled: boolean }) => { map[a.agent_type] = a.is_enabled })
+          setAgentStatusMap(map)
+        }
+      })
+  }, [clinicId, isDemo])
 
   // Agenda to display
   const agendaItems = isDemo ? mockAppointments : todayAppointments
@@ -348,7 +370,7 @@ export default function OverviewPage({
             {kpiLoading ? (
               <div style={{ height: 34, width: 90, background: 'rgba(255,255,255,0.2)', borderRadius: 6 }} />
             ) : (
-              <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 28, fontWeight: 800, lineHeight: 1.1 }}>{data[key]}</div>
+              <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 28, fontWeight: 800, lineHeight: 1.1 }}>{isDemo ? data[key] : liveKpiValues[key]}</div>
             )}
             {kpiLoading ? (
               <div style={{ height: 14, width: 130, background: 'rgba(255,255,255,0.15)', borderRadius: 4, marginTop: 8 }} />
@@ -364,16 +386,24 @@ export default function OverviewPage({
       <div style={{ ...sectionCard, padding: 16, marginBottom: 20 }}>
         <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, color: '#2A2A28', marginBottom: 12 }}>Statut des agents IA</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {['🤙 Agent Téléphone', '💬 Agent Chat Web', '📅 Agent Agenda', '📱 Agent WhatsApp'].map((name, i) => (
-            <div key={name} onClick={() => setPage('agents-dash')} style={{
-              display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px',
-              background: '#F5F5F3', borderRadius: 100, fontSize: 12, fontWeight: 600,
-              fontFamily: 'Syne, sans-serif', color: '#3E3E3C', border: '1px solid #EBEBEA', cursor: 'pointer',
-            }}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: i === 3 ? '#D69E2E' : '#38A169' }} />
-              {name}
-            </div>
-          ))}
+          {[
+            { type: 'receptionist', label: '📞 Agent Téléphone', demoActive: true },
+            { type: 'agenda', label: '📅 Agent Agenda', demoActive: true },
+            { type: 'email', label: '📧 Agent Email', demoActive: true },
+            { type: 'reminders', label: '🔔 Rappels RDV', demoActive: false },
+          ].map(agent => {
+            const isActive = isDemo ? agent.demoActive : (agentStatusMap[agent.type] ?? false)
+            return (
+              <div key={agent.type} onClick={() => setPage('agents-dash')} style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px',
+                background: '#F5F5F3', borderRadius: 100, fontSize: 12, fontWeight: 600,
+                fontFamily: 'Syne, sans-serif', color: '#3E3E3C', border: '1px solid #EBEBEA', cursor: 'pointer',
+              }}>
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: isActive ? '#38A169' : '#D4D4D2' }} />
+                {agent.label}
+              </div>
+            )
+          })}
         </div>
       </div>
 

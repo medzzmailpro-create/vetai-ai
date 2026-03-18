@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     const { clientEmail, clientName, petName, date, time, clinicName } = await req.json()
 
     const { error } = await resend.emails.send({
-      from: 'VetAI <rdv@vetai.fr>',
+      from: 'Vetai <rdv@vetai.fr>',
       to: clientEmail,
       subject: `✅ RDV confirmé — ${clinicName}`,
       html: `
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
             <p style="margin: 0;">📅 <strong>${date}</strong> à <strong>${time}</strong></p>
             <p style="margin: 8px 0 0;">📍 ${clinicName}</p>
           </div>
-          <p style="color: #9E9E9B; font-size: 13px;">Cet email a été envoyé automatiquement par VetAI.</p>
+          <p style="color: #9E9E9B; font-size: 13px;">Cet email a été envoyé automatiquement par Vetai.</p>
         </div>
       `,
     })

@@ -112,7 +112,7 @@ export function ROICalculator() {
           <h2 style={{ fontFamily: 'Syne, sans-serif', fontSize: 'clamp(28px, 3.5vw, 44px)', fontWeight: 800, color: '#141412', lineHeight: 1.15, marginBottom: 16 }}>
             Combien perdez-vous <span style={{ color: '#0A7C6E' }}>en ce moment ?</span>
           </h2>
-          <p style={{ fontSize: 17, color: '#5C5C59', maxWidth: 560, margin: '0 auto', lineHeight: 1.7 }}>Estimez en 30 secondes ce que Vetai.AI vous rapporte réellement.</p>
+          <p style={{ fontSize: 17, color: '#5C5C59', maxWidth: 560, margin: '0 auto', lineHeight: 1.7 }}>Estimez en 30 secondes ce que Vetai vous rapporte réellement.</p>
         </div>
 
         <div className="fade-up" style={{ background: 'white', border: '1px solid #EBEBEA', borderRadius: 20, padding: 40, boxShadow: 'var(--shadow-md)', maxWidth: 820, margin: '0 auto' }}>
@@ -144,7 +144,7 @@ export function ROICalculator() {
                 <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 28, fontWeight: 800, color: '#0A7C6E' }}>{rdvMois} RDV</div>
               </div>
               <div>
-                <div style={{ fontSize: 13, color: '#5C5C59', fontWeight: 500, marginBottom: 4 }}>🚀 Vetai.AI Pro amorti en</div>
+                <div style={{ fontSize: 13, color: '#5C5C59', fontWeight: 500, marginBottom: 4 }}>🚀 Vetai Pro amorti en</div>
                 <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 22, fontWeight: 800, color: '#D4891A' }}>
                   {retour <= 52 ? `< ${retour} sem.` : '> 1 an'}
                 </div>

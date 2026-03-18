@@ -312,13 +312,13 @@ export default function FirstLoginPopup({ userId, userEmail, onComplete }: Props
         {step === 'question' && (
           <div style={{ padding: '40px 40px 36px' }}>
             <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 20, fontWeight: 800, color: '#0A7C6E', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 28 }}>
-              Vetai.AI<div style={{ width: 7, height: 7, background: '#F5A623', borderRadius: '50%' }} />
+              Vetai<div style={{ width: 7, height: 7, background: '#F5A623', borderRadius: '50%' }} />
             </div>
             <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 22, fontWeight: 800, color: '#141412', marginBottom: 8, lineHeight: 1.25 }}>
-              ⚡ Bienvenue sur Vetai.AI !
+              ⚡ Bienvenue sur Vetai !
             </div>
             <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 16, fontWeight: 700, color: '#2A2A28', marginBottom: 14 }}>
-              Votre clinique est-elle déjà configurée sur Vetai.AI ?
+              Votre clinique est-elle déjà configurée sur Vetai ?
             </div>
             <p style={{ fontSize: 13, color: '#9E9E9B', lineHeight: 1.7, marginBottom: 32, background: '#F5F5F3', borderRadius: 10, padding: '12px 16px' }}>
               Si un collègue ou votre responsable a déjà créé le profil de votre clinique,
@@ -347,7 +347,7 @@ export default function FirstLoginPopup({ userId, userEmail, onComplete }: Props
           <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
             <div style={{ padding: '24px 28px 0', flexShrink: 0 }}>
               <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 20, fontWeight: 800, color: '#0A7C6E', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 20 }}>
-                Vetai.AI<div style={{ width: 7, height: 7, background: '#F5A623', borderRadius: '50%' }} />
+                Vetai<div style={{ width: 7, height: 7, background: '#F5A623', borderRadius: '50%' }} />
               </div>
               <button
                 onClick={() => { setStep('question'); setError('') }}
@@ -429,7 +429,7 @@ export default function FirstLoginPopup({ userId, userEmail, onComplete }: Props
           <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
             <div style={{ padding: '24px 28px 0', flexShrink: 0 }}>
               <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 20, fontWeight: 800, color: '#0A7C6E', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 20 }}>
-                Vetai.AI<div style={{ width: 7, height: 7, background: '#F5A623', borderRadius: '50%' }} />
+                Vetai<div style={{ width: 7, height: 7, background: '#F5A623', borderRadius: '50%' }} />
               </div>
               <button
                 onClick={() => { setStep('question'); setError('') }}

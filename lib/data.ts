@@ -107,7 +107,7 @@ export const PLANS = [
 export const FAQ = [
   {
     q: 'L\'IA remplace-t-elle mon équipe ?',
-    a: 'Non, absolument pas. Vetai.AI assiste votre équipe, elle ne la remplace pas. Les agents IA gèrent les tâches répétitives — appels entrants, confirmations, rappels — pour libérer vos ASV et vétérinaires pour ce qui nécessite une expertise humaine : l\'accueil, les soins, la relation client.',
+    a: 'Non, absolument pas. Vetai assiste votre équipe, elle ne la remplace pas. Les agents IA gèrent les tâches répétitives — appels entrants, confirmations, rappels — pour libérer vos ASV et vétérinaires pour ce qui nécessite une expertise humaine : l\'accueil, les soins, la relation client.',
   },
   {
     q: 'Combien de temps prend l\'installation ?',
@@ -115,11 +115,11 @@ export const FAQ = [
   },
   {
     q: 'Puis-je garder mon numéro de téléphone actuel ?',
-    a: 'Oui, dans la grande majorité des cas. Nous utilisons une redirection d\'appel invisible depuis votre numéro existant. Vos clients composent le même numéro et Vetai.AI prend en charge. En cas de besoin spécifique, notre équipe analyse la faisabilité lors du rendez-vous de démo.',
+    a: 'Oui, dans la grande majorité des cas. Nous utilisons une redirection d\'appel invisible depuis votre numéro existant. Vos clients composent le même numéro et Vetai prend en charge. En cas de besoin spécifique, notre équipe analyse la faisabilité lors du rendez-vous de démo.',
   },
   {
     q: 'Mes données et celles de mes clients sont-elles sécurisées ?',
-    a: 'Oui. Vetai.AI est conforme RGPD. Toutes les données sont hébergées en France (OVHcloud), chiffrées en transit (TLS 1.3) et au repos (AES-256). Nous ne revendons aucune donnée. Vous êtes propriétaire de vos données et pouvez demander leur export ou suppression à tout moment. Un DPA est fourni à la signature.',
+    a: 'Oui. Vetai est conforme RGPD. Toutes les données sont hébergées en France (OVHcloud), chiffrées en transit (TLS 1.3) et au repos (AES-256). Nous ne revendons aucune donnée. Vous êtes propriétaire de vos données et pouvez demander leur export ou suppression à tout moment. Un DPA est fourni à la signature.',
   },
   {
     q: 'Que se passe-t-il si l\'IA ne sait pas répondre ?',

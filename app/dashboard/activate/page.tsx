@@ -60,6 +60,12 @@ export default function ActivatePage() {
 
   return (
     <div style={{ maxWidth: 520, margin: '0 auto', padding: '32px 0' }}>
+      <a
+        href="/dashboard"
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, fontFamily: 'Syne, sans-serif', color: '#5C5C59', textDecoration: 'none', marginBottom: 20 }}
+      >
+        ← Retour au tableau de bord
+      </a>
       <div style={{
         background: 'white', border: '1px solid #EBEBEA', borderRadius: 16,
         padding: 32, boxShadow: '0 4px 20px rgba(0,0,0,0.06)',

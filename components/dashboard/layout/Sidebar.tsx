@@ -69,7 +69,7 @@ export default function Sidebar({ page, setPage, clinicName, sidebarOpenMobile, 
             }}
             style={{ fontFamily: 'Syne, sans-serif', fontSize: 20, fontWeight: 800, color: '#0A7C6E', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
           >
-            Vetai.AI
+            Vetai
             <div style={{ width: 7, height: 7, background: '#F5A623', borderRadius: '50%' }} />
           </div>
           <div style={{ fontSize: 12, color: '#9E9E9B', marginTop: 4 }}>{clinicName}</div>

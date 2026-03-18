@@ -14,7 +14,7 @@ export default function Pilot() {
             Soyez parmi les <span style={{ color: '#0A7C6E' }}>premières cliniques</span>
           </h2>
           <p style={{ fontSize: 17, color: '#5C5C59', maxWidth: 560, margin: '0 auto', lineHeight: 1.7 }}>
-            Vetai.AI est en phase de lancement. Nous sélectionnons 3 cliniques pilotes pour construire le produit avec elles.
+            Vetai est en phase de lancement. Nous sélectionnons 3 cliniques pilotes pour construire le produit avec elles.
           </p>
         </div>
 
@@ -69,7 +69,7 @@ export default function Pilot() {
           ))}
         </div>
         <p style={{ textAlign: 'center', fontSize: 13, color: '#9E9E9B', marginTop: 24 }}>
-          Les résultats de nos cliniques pilotes seront publiés ici dès la fin de leur premier mois avec Vetai.AI.
+          Les résultats de nos cliniques pilotes seront publiés ici dès la fin de leur premier mois avec Vetai.
         </p>
       </div>
     </section>

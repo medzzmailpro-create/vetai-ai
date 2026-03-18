@@ -458,7 +458,7 @@ export default function AdminPage() {
       <header style={{ background: 'white', borderBottom: '1.5px solid #EBEBEA', padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 20, fontWeight: 800, color: '#0A7C6E', display: 'flex', alignItems: 'center', gap: 6 }}>
-            Vetai.AI<div style={{ width: 7, height: 7, background: '#F5A623', borderRadius: '50%' }} />
+            Vetai<div style={{ width: 7, height: 7, background: '#F5A623', borderRadius: '50%' }} />
           </div>
           <div style={{ width: 1, height: 28, background: '#EBEBEA' }} />
           <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 18, fontWeight: 800, color: '#141412' }}>🛡️ Panel Support</div>

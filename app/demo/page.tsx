@@ -74,7 +74,7 @@ export default function DemoPage() {
               fontWeight: 800, color: 'white', lineHeight: 1.15,
               marginBottom: 16, letterSpacing: '-0.02em',
             }}>
-              Voyez Vetai.AI en action
+              Voyez Vetai en action
             </h1>
             <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, marginBottom: 36 }}>
               Conversations réelles. Réponses instantanées. Voici comment votre IA gère les situations du quotidien vétérinaire.
@@ -131,7 +131,7 @@ export default function DemoPage() {
                 Scénarios réels
               </div>
               <h2 style={{ fontFamily: 'Syne, sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 800, color: '#141412', lineHeight: 1.2 }}>
-                Comment Vetai.AI gère chaque situation
+                Comment Vetai gère chaque situation
               </h2>
             </div>
 
@@ -173,7 +173,7 @@ export default function DemoPage() {
                   🐾
                 </div>
                 <div>
-                  <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, color: 'white' }}>Assistant Vetai.AI</div>
+                  <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, color: 'white' }}>Assistant Vetai</div>
                   <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)' }}>● En ligne — répond en temps réel</div>
                 </div>
               </div>
@@ -191,7 +191,7 @@ export default function DemoPage() {
 
             {/* Note */}
             <p style={{ textAlign: 'center', fontSize: 13, color: '#9E9E9B', marginTop: 16 }}>
-              Ces conversations illustrent le comportement de Vetai.AI. Les réponses sont adaptées à la configuration de votre clinique.
+              Ces conversations illustrent le comportement de Vetai. Les réponses sont adaptées à la configuration de votre clinique.
             </p>
           </div>
         </section>
@@ -200,7 +200,7 @@ export default function DemoPage() {
         <section style={{ background: 'white', padding: '72px 24px' }}>
           <div style={{ maxWidth: 1000, margin: '0 auto' }}>
             <h2 style={{ fontFamily: 'Syne, sans-serif', fontSize: 'clamp(22px, 3vw, 34px)', fontWeight: 800, color: '#141412', textAlign: 'center', marginBottom: 48, lineHeight: 1.2 }}>
-              Tout ce que Vetai.AI sait faire
+              Tout ce que Vetai sait faire
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
               {[
@@ -231,7 +231,7 @@ export default function DemoPage() {
               Prêt à tester sur votre clinique ?
             </h2>
             <p style={{ fontSize: 16, color: '#5C5C59', marginBottom: 32, lineHeight: 1.7 }}>
-              Notre équipe vous montre comment Vetai.AI s'adapte exactement à votre activité en 30 minutes.
+              Notre équipe vous montre comment Vetai s'adapte exactement à votre activité en 30 minutes.
             </p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
               <a

@@ -14,7 +14,7 @@ export default function Navbar() {
     }}>
       <div style={{ maxWidth: 1160, margin: '0 auto', display: 'flex', alignItems: 'center', height: 68, gap: 32 }}>
         <a href="/" style={{ fontFamily: 'Syne, sans-serif', fontSize: 22, fontWeight: 800, color: '#0A7C6E', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
-          Vetai.AI<div style={{ width: 8, height: 8, background: '#F5A623', borderRadius: '50%' }} />
+          Vetai<div style={{ width: 8, height: 8, background: '#F5A623', borderRadius: '50%' }} />
         </a>
 
         {/* Desktop links */}

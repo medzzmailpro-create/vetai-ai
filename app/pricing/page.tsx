@@ -191,7 +191,7 @@ export default function Pricing() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
                 <div style={{ background: '#FEF2F2', padding: '12px 20px', textAlign: 'center', borderBottom: '1px solid #FEE2E2' }}>
                   <span style={{ fontFamily: 'Syne, sans-serif', fontSize: 12, fontWeight: 700, color: '#991B1B', letterSpacing: '0.08em', textTransform: 'uppercase' as const }}>
-                    Aujourd&apos;hui sans Vetai.AI
+                    Aujourd&apos;hui sans Vetai
                   </span>
                 </div>
                 <div style={{ background: '#F0FAF9', padding: '12px 20px', textAlign: 'center', borderBottom: '1px solid #D1FAF6', borderLeft: '1px solid #EBEBEA' }}>
@@ -378,7 +378,7 @@ export default function Pricing() {
                   border: '1.5px solid rgba(10,124,110,0.3)', gap: 12,
                 }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, color: '#0A7C6E', fontWeight: 700, fontFamily: 'Syne, sans-serif' }}>✅ La Sentinelle — Vetai.AI</div>
+                    <div style={{ fontSize: 13, color: '#0A7C6E', fontWeight: 700, fontFamily: 'Syne, sans-serif' }}>✅ La Sentinelle — Vetai</div>
                     <div style={{ fontSize: 11, color: '#5C5C59', marginTop: 2 }}>Tout inclus · 24h/24 · IA vétérinaire · Synchro agenda complète</div>
                   </div>
                   <div style={{ fontSize: 16, color: '#0A7C6E', fontWeight: 800, fontFamily: 'Syne, sans-serif', flexShrink: 0 }}>290€/mois</div>
@@ -405,9 +405,7 @@ export default function Pricing() {
                       <span style={{ fontSize: 17, flexShrink: 0 }}>{item.icon}</span>
                       <span style={{ fontSize: 13, color: '#3E3E3C', lineHeight: 1.45 }}>{item.label}</span>
                     </div>
-                    <div style={{ fontSize: 12, color: '#C0C0BE', fontWeight: 600, textDecoration: 'line-through', flexShrink: 0, fontFamily: 'Syne, sans-serif' }}>
-                      {item.value}
-                    </div>
+                    <span />
                   </div>
                 ))}
               </div>
@@ -418,15 +416,7 @@ export default function Pricing() {
                 border: '1.5px solid rgba(10,124,110,0.2)',
                 borderRadius: 14, padding: '18px 22px',
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#9E9E9B', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, marginBottom: 2 }}>
-                      Valeur mensuelle estimée
-                    </div>
-                    <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 24, fontWeight: 800, color: '#C0C0BE', textDecoration: 'line-through' }}>
-                      5 700€/mois
-                    </div>
-                  </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 11, color: '#0A7C6E', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, marginBottom: 2 }}>
                       Vous payez
@@ -437,8 +427,8 @@ export default function Pricing() {
                   </div>
                 </div>
                 <div style={{ paddingTop: 10, borderTop: '1px solid rgba(10,124,110,0.12)', fontSize: 13, color: '#5C5C59' }}>
-                  🎓 <strong>Onboarding + formation équipe</strong> — valeur 1 500€ —{' '}
-                  <span style={{ color: '#0A7C6E', fontWeight: 700 }}>offert</span>
+                  🎓 <strong>Onboarding</strong> —{' '}
+                  <span style={{ color: '#0A7C6E', fontWeight: 700 }}>compris</span>
                 </div>
               </div>
             </div>

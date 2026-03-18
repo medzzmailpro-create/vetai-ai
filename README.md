@@ -1,4 +1,4 @@
-# Cliniko — Assistant IA pour cliniques vétérinaires
+# Vetai — Assistant IA pour cliniques vétérinaires
 
 SaaS Next.js 14 qui automatise l'accueil client d'une clinique vétérinaire : prise d'appels 24h/24, prise de rendez-vous, relances SMS, rapports d'activité, et tableau de bord de pilotage.
 

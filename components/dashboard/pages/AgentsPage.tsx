@@ -222,7 +222,7 @@ export default function AgentsPage({
 
         {!agentsLoading && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
-            {AGENT_DEFINITIONS.filter(a => a.type !== 'transcription').map(agent => {
+            {AGENT_DEFINITIONS.filter(a => a.type !== 'transcription' && a.type !== 'analytics').map(agent => {
               const isActive = getAgentState(agent.type)
               const isTogglingThis = toggling === agent.type
               const isBlocked = !isDemo && !hasApiKeys

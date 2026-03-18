@@ -76,7 +76,7 @@ export function Garantie() {
           Satisfait ou remboursé — 14 jours
         </h2>
         <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 16, lineHeight: 1.7, marginBottom: 24 }}>
-          Si Vetai.AI ne répond pas à vos attentes dans les 14 premiers jours suivant l'activation, nous vous remboursons intégralement les frais d'installation. Sans question.
+          Si Vetai ne répond pas à vos attentes dans les 14 premiers jours suivant l'activation, nous vous remboursons intégralement les frais d'installation. Sans question.
         </p>
         <a href="#contact" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '15px 32px', background: '#F5A623', color: '#1a1a18', borderRadius: 8, fontFamily: 'Syne, sans-serif', fontWeight: 600, textDecoration: 'none', fontSize: 16 }}>
           Démarrer sans risque →

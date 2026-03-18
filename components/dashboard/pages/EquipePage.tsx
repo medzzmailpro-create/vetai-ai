@@ -6,6 +6,8 @@ import type { ClinicMember } from '../types/types'
 
 type Props = {
   clinicId: string
+  userId: string
+  userRole: 'owner' | 'staff'
 }
 
 const ROLE_STYLE: Record<string, { bg: string; color: string; label: string }> = {
@@ -20,10 +22,12 @@ function formatLastSeen(lastSeen: string | null): string {
   return `Vu le ${date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })} à ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
 }
 
-export default function EquipePage({ clinicId }: Props) {
+export default function EquipePage({ clinicId, userId, userRole }: Props) {
   const [members, setMembers] = useState<ClinicMember[]>([])
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
+  const [deleting, setDeleting] = useState<string | null>(null)
+  const [promoting, setPromoting] = useState<string | null>(null)
 
   useEffect(() => {
     if (!clinicId) { setLoading(false); return }
@@ -48,6 +52,37 @@ export default function EquipePage({ clinicId }: Props) {
     navigator.clipboard.writeText(clinicId)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const deleteMember = async (memberId: string, memberUserId: string) => {
+    if (!window.confirm('Supprimer ce membre de la clinique ?')) return
+    setDeleting(memberUserId)
+    try {
+      const { error } = await supabase
+        .from('clinic_members')
+        .delete()
+        .eq('user_id', memberUserId)
+        .eq('clinic_id', clinicId)
+      if (!error) setMembers(prev => prev.filter(m => m.id !== memberId))
+    } catch { /* silent */ } finally {
+      setDeleting(null)
+    }
+  }
+
+  const toggleRole = async (memberId: string, memberUserId: string, currentRole: string) => {
+    const newRole = currentRole === 'staff' ? 'owner' : 'staff'
+    if (newRole === 'staff' && !window.confirm('Rétrograder ce membre en Staff ?')) return
+    setPromoting(memberUserId)
+    try {
+      const { error } = await supabase
+        .from('clinic_members')
+        .update({ role: newRole })
+        .eq('user_id', memberUserId)
+        .eq('clinic_id', clinicId)
+      if (!error) setMembers(prev => prev.map(m => m.id === memberId ? { ...m, role: newRole } : m))
+    } catch { /* silent */ } finally {
+      setPromoting(null)
+    }
   }
 
   return (
@@ -106,18 +141,22 @@ export default function EquipePage({ clinicId }: Props) {
             : (m.email ?? '—')
           const initials = (m.first_name?.[0] ?? '') + (m.last_name?.[0] ?? '')
           const roleStyle = ROLE_STYLE[m.role] ?? { bg: '#F1EFE8', color: '#5F5E5A', label: m.role }
+          const isSelf = m.user_id === userId
+          const canManage = userRole === 'owner' && !isSelf && m.role !== 'support'
 
           return (
-            <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0', borderBottom: '1px solid #F5F5F3' }}>
+            <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 0', borderBottom: '1px solid #F5F5F3', flexWrap: 'wrap' }}>
 
               {/* Avatar */}
-              <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#0A7C6E', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
+              <div style={{ width: 44, height: 44, borderRadius: '50%', background: isSelf ? '#065E53' : '#0A7C6E', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
                 {initials || '?'}
               </div>
 
               {/* Name + email */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, color: '#2A2A28' }}>{displayName}</div>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, color: '#2A2A28' }}>
+                  {displayName}{isSelf ? ' (vous)' : ''}
+                </div>
                 <div style={{ fontSize: 11, color: '#9E9E9B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.email ?? '—'}</div>
               </div>
 
@@ -143,6 +182,37 @@ export default function EquipePage({ clinicId }: Props) {
               <div style={{ fontSize: 11, color: '#9E9E9B', flexShrink: 0, textAlign: 'right', minWidth: 80 }}>
                 {new Date(m.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
               </div>
+
+              {/* Actions (owner only, not self, not support) */}
+              {canManage && (
+                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                  {m.role === 'staff' && (
+                    <button
+                      onClick={() => toggleRole(m.id, m.user_id, m.role)}
+                      disabled={promoting === m.user_id}
+                      style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid #0A7C6E', background: 'white', color: '#0A7C6E', fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 600, cursor: 'pointer', opacity: promoting === m.user_id ? 0.6 : 1 }}
+                    >
+                      {promoting === m.user_id ? '…' : '↑ Propriétaire'}
+                    </button>
+                  )}
+                  {m.role === 'owner' && (
+                    <button
+                      onClick={() => toggleRole(m.id, m.user_id, m.role)}
+                      disabled={promoting === m.user_id}
+                      style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid #D4D4D2', background: 'white', color: '#5C5C59', fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 600, cursor: 'pointer', opacity: promoting === m.user_id ? 0.6 : 1 }}
+                    >
+                      {promoting === m.user_id ? '…' : '↓ Staff'}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => deleteMember(m.id, m.user_id)}
+                    disabled={deleting === m.user_id}
+                    style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid #E53E3E', background: 'white', color: '#E53E3E', fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 600, cursor: 'pointer', opacity: deleting === m.user_id ? 0.6 : 1 }}
+                  >
+                    {deleting === m.user_id ? '…' : 'Retirer'}
+                  </button>
+                </div>
+              )}
             </div>
           )
         })}

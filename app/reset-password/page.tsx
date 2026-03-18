@@ -77,7 +77,7 @@ export default function ResetPasswordPage() {
         boxShadow: '0 12px 40px rgba(10,124,110,0.15), 0 4px 12px rgba(0,0,0,0.08)',
       }}>
         <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 26, fontWeight: 800, color: '#0A7C6E', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-          Vetai.AI<div style={{ width: 8, height: 8, background: '#F5A623', borderRadius: '50%' }} />
+          Vetai<div style={{ width: 8, height: 8, background: '#F5A623', borderRadius: '50%' }} />
         </div>
 
         {success ? (

@@ -41,7 +41,7 @@ export default function Contact() {
           <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#F5A623', marginBottom: 12 }}>Démo gratuite</div>
           <h2 style={{ fontFamily: 'Syne, sans-serif', fontSize: 'clamp(28px, 3.5vw, 40px)', fontWeight: 800, color: '#141412', lineHeight: 1.15, marginBottom: 12 }}>Réservez votre démo gratuite</h2>
           <p style={{ fontSize: 16, color: '#5C5C59', lineHeight: 1.7, marginBottom: 28 }}>
-            En 30 minutes, notre équipe vous montre comment Vetai.AI s'adapte à votre clinique.
+            En 30 minutes, notre équipe vous montre comment Vetai s'adapte à votre clinique.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 28 }}>
             {[

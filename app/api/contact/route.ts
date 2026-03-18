@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
           from: 'Vetai <noreply@vetai.fr>',
           to: [notifyEmail],
           subject: `Nouvelle demande : ${prenom.trim()} — ${clinique?.trim() ?? ''}`,
-          text: `Nouvelle demande de démo Vetai.AI\n\n${subject}\n\n${ticketMessage}`,
+          text: `Nouvelle demande de démo Vetai\n\n${subject}\n\n${ticketMessage}`,
         }),
       })
     } catch {
