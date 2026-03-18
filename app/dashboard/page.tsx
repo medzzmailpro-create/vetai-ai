@@ -5,8 +5,6 @@ import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Dashboard from '@/components/dashboard/Dashboard'
 
-export const revalidate = 0
-
 export default function DashboardPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
