@@ -142,15 +142,14 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
           specialized: 'Clinique spécialisée',
           other: 'Autre',
         }
+        setClinicConfig(DEFAULT_CONFIG)
         let clinicDisplayData: { name?: string; address?: string; phone?: string; email?: string; opening_hours?: string; clinic_type?: string } = {}
-        if (resolvedClinicId) {
-          const { data: clinicRow } = await supabase
-            .from('clinics')
-            .select('name, address, phone, email, opening_hours, clinic_type')
-            .eq('id', resolvedClinicId)
-            .single()
-          if (clinicRow) clinicDisplayData = clinicRow
-        }
+        const { data: clinicRow } = await supabase
+          .from('clinics')
+          .select('name, address, phone, email, opening_hours, clinic_type')
+          .eq('owner_user_id', user.id)
+          .single()
+        if (clinicRow) clinicDisplayData = clinicRow
 
         if (configData || resolvedClinicId) {
           setClinicConfig({
@@ -219,16 +218,11 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
       other: 'Autre',
     }
     try {
-      const { data: profileRow } = await supabase
-        .from('profiles')
-        .select('clinic_id')
-        .eq('id', uid)
-        .single()
-      const cid = profileRow?.clinic_id ?? ''
+      setClinicConfig(DEFAULT_CONFIG)
 
       const [{ data: cfgData }, { data: clinicRow }] = await Promise.all([
         supabase.from('clinic_config').select('*').eq('user_id', uid).single(),
-        cid ? supabase.from('clinics').select('name, address, phone, email, opening_hours, clinic_type').eq('id', cid).single() : Promise.resolve({ data: null }),
+        supabase.from('clinics').select('name, address, phone, email, opening_hours, clinic_type').eq('owner_user_id', uid).single(),
       ])
 
       if (cfgData || clinicRow) {
