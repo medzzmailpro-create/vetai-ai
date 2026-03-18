@@ -275,8 +275,23 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
         }
       )
       .subscribe()
-    return () => { supabase.removeChannel(channel) }
-  }, [userId])
+
+    const clinicsChannel = supabase
+      .channel('clinics-changes')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'clinics' },
+        () => {
+          refreshClinicConfig(userId)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+      supabase.removeChannel(clinicsChannel)
+    }
+  }, [userId, refreshClinicConfig])
 
   // Re-fetch clinic config when the browser tab becomes visible again
   // (handles the case where admin changed data in another tab/window)
