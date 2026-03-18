@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import Sidebar from './layout/Sidebar'
 import Topbar from './layout/Topbar'
@@ -190,6 +190,32 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     return () => clearInterval(interval)
   }, [userId, clinicId])
 
+  // Fetch fresh clinic config from Supabase (no cache)
+  const refreshClinicConfig = useCallback(async (uid: string) => {
+    try {
+      const { data } = await supabase
+        .from('clinic_config')
+        .select('*')
+        .eq('user_id', uid)
+        .single()
+      if (data) {
+        setClinicConfig({
+          clinic_name: data.clinic_name ?? '',
+          address: data.address ?? '',
+          phone: data.phone ?? '',
+          email: data.email ?? '',
+          hours: data.hours ?? '',
+          clinic_type: data.clinic_type ?? 'Vétérinaire généraliste',
+          transfert_enabled: data.transfert_enabled ?? true,
+          transfert_number: data.transfert_number ?? '',
+          duree_rdv: data.duree_rdv ?? 20,
+          buffer_rdv: data.buffer_rdv ?? 5,
+          setup_done: data.setup_done ?? false,
+        })
+      }
+    } catch { /* silent */ }
+  }, [])
+
   // Realtime sync: refresh clinicConfig when admin updates it
   useEffect(() => {
     if (!userId) return
@@ -218,6 +244,19 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [userId])
+
+  // Re-fetch clinic config when the browser tab becomes visible again
+  // (handles the case where admin changed data in another tab/window)
+  useEffect(() => {
+    if (!userId) return
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        refreshClinicConfig(userId)
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [userId, refreshClinicConfig])
 
   const handleReadNotification = async (id: string) => {
     setLiveNotifications(prev => prev.filter(n => n.id !== id))
