@@ -151,29 +151,37 @@ export default function AdminPage() {
 
   const openConfigPopup = async (clinic: Clinic) => {
     setConfigLoading(true)
+    const CLINIC_TYPE_LABEL: Record<string, string> = {
+      general: 'Vétérinaire généraliste',
+      emergency: "Clinique d'urgence",
+      specialized: 'Clinique spécialisée',
+      other: 'Autre',
+    }
+
     const memberIds = clinic.members?.map(m => m.id) ?? []
     if (clinic.owner_user_id) memberIds.push(clinic.owner_user_id)
-    const { data } = await supabase
-      .from('clinic_config')
-      .select('*')
-      .in('user_id', memberIds)
-      .limit(1)
-      .single()
+
+    const [{ data: clinicRow }, { data: cfgData }] = await Promise.all([
+      supabase.from('clinics').select('name, address, phone, email, opening_hours, clinic_type').eq('id', clinic.id).single(),
+      supabase.from('clinic_config').select('*').in('user_id', memberIds).limit(1).single(),
+    ])
+
     setConfigLoading(false)
-    if (!data) { showToast('Aucune configuration renseignée.', 'error'); return }
+
+    const configUserId = cfgData?.user_id ?? clinic.owner_user_id ?? ''
     const configData: ClinicConfig = {
-      clinic_name: data.clinic_name,
-      address: data.address,
-      phone: data.phone,
-      email: data.email,
-      hours: data.hours,
-      clinic_type: data.clinic_type,
-      transfert_enabled: data.transfert_enabled,
-      transfert_number: data.transfert_number,
-      duree_rdv: data.duree_rdv,
-      buffer_rdv: data.buffer_rdv,
+      clinic_name: clinicRow?.name ?? cfgData?.clinic_name ?? '',
+      address: clinicRow?.address ?? cfgData?.address ?? '',
+      phone: clinicRow?.phone ?? cfgData?.phone ?? '',
+      email: clinicRow?.email ?? cfgData?.email ?? '',
+      hours: clinicRow?.opening_hours ?? cfgData?.hours ?? '',
+      clinic_type: CLINIC_TYPE_LABEL[clinicRow?.clinic_type ?? ''] ?? cfgData?.clinic_type ?? 'Vétérinaire généraliste',
+      transfert_enabled: cfgData?.transfert_enabled ?? true,
+      transfert_number: cfgData?.transfert_number ?? '',
+      duree_rdv: cfgData?.duree_rdv ?? 20,
+      buffer_rdv: cfgData?.buffer_rdv ?? 5,
     }
-    setConfigPopup({ clinicName: clinic.name, clinicId: clinic.id, configUserId: data.user_id, config: configData })
+    setConfigPopup({ clinicName: clinic.name, clinicId: clinic.id, configUserId, config: configData })
     setEditConfig(configData)
   }
 
@@ -183,7 +191,8 @@ export default function AdminPage() {
     const errors: string[] = []
 
     // 1. Mise à jour clinic_config
-    const { error: cfgErr } = await supabase.from('clinic_config').update({
+    const { error: cfgErr } = await supabase.from('clinic_config').upsert({
+      user_id: configPopup.configUserId,
       clinic_name: editConfig.clinic_name,
       address: editConfig.address,
       phone: editConfig.phone,
@@ -195,7 +204,7 @@ export default function AdminPage() {
       duree_rdv: editConfig.duree_rdv,
       buffer_rdv: editConfig.buffer_rdv,
       updated_at: new Date().toISOString(),
-    }).eq('user_id', configPopup.configUserId)
+    }, { onConflict: 'user_id' })
     if (cfgErr) errors.push(cfgErr.message)
 
     // 2. Synchronise aussi la table clinics

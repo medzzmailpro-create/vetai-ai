@@ -203,6 +203,13 @@ export default function FirstLoginPopup({ userId, userEmail, onComplete }: Props
         updated_at: new Date().toISOString(),
       })
 
+      // Insert owner into clinic_members
+      await supabase.from('clinic_members').upsert({
+        user_id: userId,
+        clinic_id: clinic.id,
+        role: 'owner',
+      }, { onConflict: 'user_id,clinic_id' }).select()
+
       // Insert 4 default AI agents for this clinic
       await supabase.from('ai_agents').insert([
         { clinic_id: clinic.id, type: 'phone',  is_active: true,  config: { voice: 'fr-FR', greeting: `Bonjour, ${newClinicName.trim()}` } },

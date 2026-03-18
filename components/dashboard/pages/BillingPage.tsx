@@ -89,7 +89,7 @@ export default function BillingPage({ clinicId }: { clinicId: string }) {
             { label: 'Plan actuel', value: 'Pack Clinique', color: '' },
             { label: 'Statut abonnement', value: 'Actif', color: '#38A169' },
             { label: 'Prochaine facturation', value: '10 avril 2026', color: '' },
-            { label: 'Montant', value: '290 € / mois', color: '' },
+            { label: 'Montant', value: '249 € HT / mois', color: '' },
           ].map(({ label, value, color }) => (
             <div
               key={label}
