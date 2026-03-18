@@ -344,6 +344,14 @@ export default function ConfigurationPage({ config, onConfigChange, userId }: Pr
       if (profErr) errors.push(profErr.message)
 
       if (profileClinicId && isOwner) {
+        const clinicTypeMap: Record<string, string> = {
+          'Vétérinaire généraliste': 'general',
+          "Clinique d'urgence": 'emergency',
+          'Clinique spécialisée': 'specialized',
+          'Autre': 'other',
+        }
+        const clinicTypeValue = clinicTypeMap[clinicType] ?? clinicType
+
         const { error: clinicsErr } = await supabase
           .from('clinics')
           .update({
@@ -352,7 +360,7 @@ export default function ConfigurationPage({ config, onConfigChange, userId }: Pr
             phone: phone.trim(),
             email: email.trim(),
             opening_hours: hours.trim(),
-            clinic_type: clinicType,
+            clinic_type: clinicTypeValue,
           })
           .eq('id', profileClinicId)
         if (clinicsErr) errors.push(clinicsErr.message)
