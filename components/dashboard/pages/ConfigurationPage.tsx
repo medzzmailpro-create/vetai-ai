@@ -103,6 +103,16 @@ export default function ConfigurationPage({ config, onConfigChange, userId }: Pr
   const [dureeRdv, setDureeRdv] = useState(config.duree_rdv)
   const [bufferRdv, setBufferRdv] = useState(config.buffer_rdv)
 
+  useEffect(() => {
+    if (!config) return
+    setClinicName(config.clinic_name ?? '')
+    setAddress(config.address ?? '')
+    setPhone(config.phone ?? '')
+    setEmail(config.email ?? '')
+    setHours(config.hours ?? '')
+    setClinicType(config.clinic_type ?? '')
+  }, [config])
+
   // Transcriptions toggle (saved in clinic_agents table)
   const [transcriptionsEnabled, setTranscriptionsEnabled] = useState(true)
   const [togglingTranscriptions, setTogglingTranscriptions] = useState(false)
