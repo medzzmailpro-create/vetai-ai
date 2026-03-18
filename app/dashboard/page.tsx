@@ -1,5 +1,7 @@
 'use client'
 
+export const revalidate = 0
+
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'

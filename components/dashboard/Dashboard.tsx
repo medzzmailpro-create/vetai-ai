@@ -128,25 +128,45 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
           } catch {}
         }
 
+        // fetch clinic_config for config-specific fields (transfert, rdv, etc.)
         const { data: configData } = await supabase
           .from('clinic_config')
           .select('*')
           .eq('user_id', user.id)
           .single()
 
-        if (configData) {
+        // fetch clinics directly — source of truth for admin-edited display fields
+        const CLINIC_TYPE_LABEL: Record<string, string> = {
+          general: 'Vétérinaire généraliste',
+          emergency: "Clinique d'urgence",
+          specialized: 'Clinique spécialisée',
+          other: 'Autre',
+        }
+        let clinicDisplayData: { name?: string; address?: string; phone?: string; email?: string; opening_hours?: string; clinic_type?: string } = {}
+        if (resolvedClinicId) {
+          const { data: clinicRow } = await supabase
+            .from('clinics')
+            .select('name, address, phone, email, opening_hours, clinic_type')
+            .eq('id', resolvedClinicId)
+            .single()
+          if (clinicRow) clinicDisplayData = clinicRow
+        }
+
+        if (configData || resolvedClinicId) {
           setClinicConfig({
-            clinic_name: configData.clinic_name ?? '',
-            address: configData.address ?? '',
-            phone: configData.phone ?? '',
-            email: configData.email ?? '',
-            hours: configData.hours ?? '',
-            clinic_type: configData.clinic_type ?? 'Vétérinaire généraliste',
-            transfert_enabled: configData.transfert_enabled ?? true,
-            transfert_number: configData.transfert_number ?? '',
-            duree_rdv: configData.duree_rdv ?? 20,
-            buffer_rdv: configData.buffer_rdv ?? 5,
-            setup_done: configData.setup_done ?? false,
+            // Display fields: prefer clinics table so admin changes reflect immediately
+            clinic_name: clinicDisplayData.name ?? configData?.clinic_name ?? '',
+            address: clinicDisplayData.address ?? configData?.address ?? '',
+            phone: clinicDisplayData.phone ?? configData?.phone ?? '',
+            email: clinicDisplayData.email ?? configData?.email ?? '',
+            hours: clinicDisplayData.opening_hours ?? configData?.hours ?? '',
+            clinic_type: CLINIC_TYPE_LABEL[clinicDisplayData.clinic_type ?? ''] ?? configData?.clinic_type ?? 'Vétérinaire généraliste',
+            // Config-specific fields from clinic_config
+            transfert_enabled: configData?.transfert_enabled ?? true,
+            transfert_number: configData?.transfert_number ?? '',
+            duree_rdv: configData?.duree_rdv ?? 20,
+            buffer_rdv: configData?.buffer_rdv ?? 5,
+            setup_done: configData?.setup_done ?? false,
           })
         }
 
@@ -190,27 +210,40 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     return () => clearInterval(interval)
   }, [userId, clinicId])
 
-  // Fetch fresh clinic config from Supabase (no cache)
+  // Fetch fresh clinic config from Supabase (no cache) — reads from clinics table for display fields
   const refreshClinicConfig = useCallback(async (uid: string) => {
+    const CLINIC_TYPE_LABEL: Record<string, string> = {
+      general: 'Vétérinaire généraliste',
+      emergency: "Clinique d'urgence",
+      specialized: 'Clinique spécialisée',
+      other: 'Autre',
+    }
     try {
-      const { data } = await supabase
-        .from('clinic_config')
-        .select('*')
-        .eq('user_id', uid)
+      const { data: profileRow } = await supabase
+        .from('profiles')
+        .select('clinic_id')
+        .eq('id', uid)
         .single()
-      if (data) {
+      const cid = profileRow?.clinic_id ?? ''
+
+      const [{ data: cfgData }, { data: clinicRow }] = await Promise.all([
+        supabase.from('clinic_config').select('*').eq('user_id', uid).single(),
+        cid ? supabase.from('clinics').select('name, address, phone, email, opening_hours, clinic_type').eq('id', cid).single() : Promise.resolve({ data: null }),
+      ])
+
+      if (cfgData || clinicRow) {
         setClinicConfig({
-          clinic_name: data.clinic_name ?? '',
-          address: data.address ?? '',
-          phone: data.phone ?? '',
-          email: data.email ?? '',
-          hours: data.hours ?? '',
-          clinic_type: data.clinic_type ?? 'Vétérinaire généraliste',
-          transfert_enabled: data.transfert_enabled ?? true,
-          transfert_number: data.transfert_number ?? '',
-          duree_rdv: data.duree_rdv ?? 20,
-          buffer_rdv: data.buffer_rdv ?? 5,
-          setup_done: data.setup_done ?? false,
+          clinic_name: clinicRow?.name ?? cfgData?.clinic_name ?? '',
+          address: clinicRow?.address ?? cfgData?.address ?? '',
+          phone: clinicRow?.phone ?? cfgData?.phone ?? '',
+          email: clinicRow?.email ?? cfgData?.email ?? '',
+          hours: clinicRow?.opening_hours ?? cfgData?.hours ?? '',
+          clinic_type: CLINIC_TYPE_LABEL[clinicRow?.clinic_type ?? ''] ?? cfgData?.clinic_type ?? 'Vétérinaire généraliste',
+          transfert_enabled: cfgData?.transfert_enabled ?? true,
+          transfert_number: cfgData?.transfert_number ?? '',
+          duree_rdv: cfgData?.duree_rdv ?? 20,
+          buffer_rdv: cfgData?.buffer_rdv ?? 5,
+          setup_done: cfgData?.setup_done ?? false,
         })
       }
     } catch { /* silent */ }

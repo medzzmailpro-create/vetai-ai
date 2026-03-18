@@ -206,14 +206,17 @@ export default function AdminPage() {
       'Autre': 'other',
     }
     const clinicTypeEnum = clinicTypeMap[editConfig.clinic_type ?? ''] ?? 'general'
-    const { error: clinicErr } = await supabase.from('clinics').update({
+    const clinicPatch = {
       name: editConfig.clinic_name,
       address: editConfig.address,
       phone: editConfig.phone,
       email: editConfig.email,
       opening_hours: editConfig.hours,
       clinic_type: clinicTypeEnum,
-    }).eq('id', configPopup.clinicId)
+    }
+    console.log('[Admin] PATCH clinics →', { clinicId: configPopup.clinicId, payload: clinicPatch })
+    const { data: clinicPatchResult, error: clinicErr } = await supabase.from('clinics').update(clinicPatch).eq('id', configPopup.clinicId).select()
+    console.log('[Admin] PATCH clinics ←', { data: clinicPatchResult, error: clinicErr })
     if (clinicErr) errors.push(clinicErr.message)
 
     setSavingConfig(false)
