@@ -58,8 +58,8 @@ const FAQ_ITEMS = [
     a: "48 heures. Notre équipe installe, configure et forme votre équipe. Vous ne touchez à rien. Le lundi vous signez, le mercredi La Sentinelle veille sur votre clinique.",
   },
   {
-    q: "Pourquoi le prix va passer à 790€/mois ?",
-    a: "Pour chaque nouvelle clinique, nous dédions un ingénieur à l'onboarding et un account manager au suivi continu. Au-delà de 20 cliniques actives, le coût de service augmente structurellement. Les premières cliniques gardent 290€/mois à vie — c'est contractuel.",
+    q: "Pourquoi le prix va passer à 349€/mois ?",
+    a: "Pour chaque nouvelle clinique, nous dédions un ingénieur à l'onboarding et un account manager au suivi continu. Au-delà de 20 cliniques actives, le coût de service augmente structurellement. Les premières cliniques gardent 249€/mois à vie — c'est contractuel.",
   },
 ]
 
@@ -129,11 +129,11 @@ export default function Pricing() {
           borderBottom: '1px solid rgba(255,255,255,0.1)',
         }}>
           <p style={{ fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, color: 'white', margin: 0 }}>
-            🔥 Tarif de lancement garanti à vie ·{' '}
+            🚀 Tarif de lancement garanti à vie ·{' '}
             <span style={{ color: '#FFD166' }}>
               {PLACES_RESTANTES} place{PLACES_RESTANTES > 1 ? 's' : ''} restante{PLACES_RESTANTES > 1 ? 's' : ''}
             </span>
-            {' '}· Passe à 790€/mois après 20 cliniques
+            {' '}· Passe à 349€ HT/mois + 890€ HT d&apos;installation après les 20 premières cliniques
           </p>
         </div>
 
@@ -304,7 +304,7 @@ export default function Pricing() {
                 <strong style={{ fontFamily: 'Syne, sans-serif', color: '#92570C' }}>
                   Ce tarif est garanti à vie pour les premières cliniques.
                 </strong>
-                {' '}Dès que nous atteignons 20 cliniques, le mensuel passe à 790€/mois.{' '}
+                {' '}Dès que nous atteignons 20 cliniques, le mensuel passe à 349€ HT/mois + 890€ HT d&apos;installation.{' '}
                 <strong style={{ color: '#92570C' }}>
                   Il reste {PLACES_RESTANTES} place{PLACES_RESTANTES > 1 ? 's' : ''} — c&apos;est contractuel.
                 </strong>
@@ -321,11 +321,11 @@ export default function Pricing() {
                 <div style={{ fontSize: 11, color: '#9E9E9B', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase' as const, letterSpacing: '0.1em' }}>
                   Installation
                 </div>
-                <div style={{ fontSize: 14, color: '#C0C0BE', textDecoration: 'line-through', marginBottom: 4 }}>1 500€</div>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 34, fontWeight: 800, color: '#141412', lineHeight: 1 }}>499€</div>
-                <div style={{ fontSize: 12, color: '#9E9E9B', marginTop: 6 }}>paiement unique</div>
+                <div style={{ fontSize: 14, color: '#C0C0BE', textDecoration: 'line-through', marginBottom: 4 }}>890€ HT</div>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 34, fontWeight: 800, color: '#141412', lineHeight: 1 }}>490€ HT</div>
+                <div style={{ fontSize: 12, color: '#9E9E9B', marginTop: 6 }}>paiement unique · tarif lancement</div>
                 <div style={{ marginTop: 8, display: 'inline-block', background: '#E8F5F3', color: '#0A7C6E', fontSize: 11, fontWeight: 700, fontFamily: 'Syne, sans-serif', padding: '2px 8px', borderRadius: 4 }}>
-                  −1 001€
+                  −400€
                 </div>
               </div>
 
@@ -335,14 +335,14 @@ export default function Pricing() {
                 <div style={{ fontSize: 11, color: '#9E9E9B', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase' as const, letterSpacing: '0.1em' }}>
                   Mensuel
                 </div>
-                <div style={{ fontSize: 14, color: '#C0C0BE', textDecoration: 'line-through', marginBottom: 4 }}>490€/mois</div>
+                <div style={{ fontSize: 14, color: '#C0C0BE', textDecoration: 'line-through', marginBottom: 4 }}>349€ HT/mois</div>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: 1 }}>
                   <span style={{ fontFamily: 'Syne, sans-serif', fontSize: 18, fontWeight: 700, color: '#0A7C6E', marginTop: 8 }}>€</span>
-                  <span style={{ fontFamily: 'Syne, sans-serif', fontSize: 54, fontWeight: 800, color: '#0A7C6E', lineHeight: 1 }}>290</span>
+                  <span style={{ fontFamily: 'Syne, sans-serif', fontSize: 54, fontWeight: 800, color: '#0A7C6E', lineHeight: 1 }}>249</span>
                 </div>
-                <div style={{ fontSize: 12, color: '#9E9E9B', marginTop: 6 }}>par mois · garanti à vie</div>
+                <div style={{ fontSize: 12, color: '#9E9E9B', marginTop: 6 }}>HT/mois · tarif lancement garanti à vie</div>
                 <div style={{ marginTop: 8, display: 'inline-block', background: '#E8F5F3', color: '#0A7C6E', fontSize: 11, fontWeight: 700, fontFamily: 'Syne, sans-serif', padding: '2px 8px', borderRadius: 4 }}>
-                  −200€/mois
+                  −100€/mois
                 </div>
               </div>
             </div>
@@ -381,7 +381,7 @@ export default function Pricing() {
                     <div style={{ fontSize: 13, color: '#0A7C6E', fontWeight: 700, fontFamily: 'Syne, sans-serif' }}>✅ La Sentinelle — Vetai</div>
                     <div style={{ fontSize: 11, color: '#5C5C59', marginTop: 2 }}>Tout inclus · 24h/24 · IA vétérinaire · Synchro agenda complète</div>
                   </div>
-                  <div style={{ fontSize: 16, color: '#0A7C6E', fontWeight: 800, fontFamily: 'Syne, sans-serif', flexShrink: 0 }}>290€/mois</div>
+                  <div style={{ fontSize: 16, color: '#0A7C6E', fontWeight: 800, fontFamily: 'Syne, sans-serif', flexShrink: 0 }}>249€ HT/mois</div>
                 </div>
               </div>
             </div>
@@ -422,7 +422,7 @@ export default function Pricing() {
                       Vous payez
                     </div>
                     <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 30, fontWeight: 800, color: '#0A7C6E' }}>
-                      290€/mois
+                      249€ HT/mois
                     </div>
                   </div>
                 </div>
@@ -486,7 +486,7 @@ export default function Pricing() {
                 e.currentTarget.style.boxShadow = '0 6px 24px rgba(10,124,110,0.35)'
               }}
             >
-              Activer La Sentinelle — 290€/mois →
+              Activer La Sentinelle — 249€ HT/mois →
             </button>
 
             <p style={{ textAlign: 'center', fontSize: 12, color: '#9E9E9B', marginTop: 10 }}>
@@ -578,7 +578,7 @@ export default function Pricing() {
               <span style={{ color: '#0D9E8D' }}>c&apos;est des appels perdus et de l&apos;argent laissé sur la table.</span>
             </h2>
             <p style={{ fontSize: 15, color: '#9E9E9B', lineHeight: 1.7, marginBottom: 28, maxWidth: 440, margin: '0 auto 28px' }}>
-              290€/mois. Moins cher qu&apos;un mi-temps. ROI garanti dès la première semaine. Remboursé si insatisfait.
+              249€ HT/mois. Moins cher qu&apos;un mi-temps. ROI garanti dès la première semaine. Remboursé si insatisfait.
             </p>
 
             <button
@@ -601,7 +601,7 @@ export default function Pricing() {
                 e.currentTarget.style.boxShadow = '0 6px 24px rgba(10,124,110,0.5)'
               }}
             >
-              Je veux La Sentinelle — 290€/mois →
+              Je veux La Sentinelle — 249€ HT/mois →
             </button>
             <p style={{ fontSize: 12, color: '#5C5C59', marginTop: 12 }}>
               ⚡ Opérationnel en 48h · Sans engagement · Garantie 30 jours

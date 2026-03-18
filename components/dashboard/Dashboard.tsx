@@ -190,6 +190,35 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     return () => clearInterval(interval)
   }, [userId, clinicId])
 
+  // Realtime sync: refresh clinicConfig when admin updates it
+  useEffect(() => {
+    if (!userId) return
+    const channel = supabase
+      .channel(`clinic_config_${userId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'clinic_config', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const d = payload.new as Record<string, unknown>
+          setClinicConfig({
+            clinic_name: (d.clinic_name as string) ?? '',
+            address: (d.address as string) ?? '',
+            phone: (d.phone as string) ?? '',
+            email: (d.email as string) ?? '',
+            hours: (d.hours as string) ?? '',
+            clinic_type: (d.clinic_type as string) ?? 'Vétérinaire généraliste',
+            transfert_enabled: (d.transfert_enabled as boolean) ?? true,
+            transfert_number: (d.transfert_number as string) ?? '',
+            duree_rdv: (d.duree_rdv as number) ?? 20,
+            buffer_rdv: (d.buffer_rdv as number) ?? 5,
+            setup_done: (d.setup_done as boolean) ?? false,
+          })
+        }
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [userId])
+
   const handleReadNotification = async (id: string) => {
     setLiveNotifications(prev => prev.filter(n => n.id !== id))
     try {

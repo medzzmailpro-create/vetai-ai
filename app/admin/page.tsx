@@ -139,8 +139,12 @@ export default function AdminPage() {
   useEffect(() => {
     loadProfiles()
     loadClinics()
-    const channel = supabase.channel('admin-profiles')
+    // Listen for changes to profiles, clinics, and clinic_config so admin view
+    // stays in sync when a dashboard user saves their configuration.
+    const channel = supabase.channel('admin-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => { loadProfiles(); loadClinics() })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clinics' }, () => { loadClinics() })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clinic_config' }, () => { loadClinics() })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [loadProfiles, loadClinics])

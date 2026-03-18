@@ -111,8 +111,12 @@ export default function OverviewPage({
   const [gradientHovered, setGradientHovered] = useState(false)
   const customizeRef = useRef<HTMLDivElement>(null)
 
-  const [kpiVisible, setKpiVisible] = useState<Record<KpiKey, boolean>>({
-    revenue: true, time: true, noShows: true, missed: true,
+  const [kpiVisible, setKpiVisible] = useState<Record<KpiKey, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem('vetai_kpi_visible')
+      if (saved) return JSON.parse(saved) as Record<KpiKey, boolean>
+    } catch { /* ignore */ }
+    return { revenue: true, time: true, noShows: true, missed: true }
   })
 
   const [comparison, setComparison] = useState<Comparison>(MOCK_COMPARISON[period])
@@ -138,7 +142,11 @@ export default function OverviewPage({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [customizeOpen])
 
-  const toggleKpi = (key: KpiKey) => setKpiVisible(prev => ({ ...prev, [key]: !prev[key] }))
+  const toggleKpi = (key: KpiKey) => setKpiVisible(prev => {
+    const next = { ...prev, [key]: !prev[key] }
+    try { localStorage.setItem('vetai_kpi_visible', JSON.stringify(next)) } catch { /* ignore */ }
+    return next
+  })
 
   // Fetch today's appointments from Supabase
   useEffect(() => {

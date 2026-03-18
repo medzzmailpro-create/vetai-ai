@@ -59,13 +59,18 @@ Puis cliquer **Redeploy**.
 
 ## 🟠 IMPORTANT — À faire pour les paiements
 
-### STRIPE — Créer le produit
-**Où :** Stripe Dashboard → Products → Add product
+### STRIPE — Mettre à jour le prix (249€ HT/mois)
+**Où :** Stripe Dashboard → Products → "La Sentinelle"
 **Quoi :**
-1. Nom : `La Sentinelle`
-2. Prix : `290 €/mois` (recurring, monthly)
-3. Copier le `price_id` (commence par `price_...`)
-4. L'ajouter dans Vercel : `STRIPE_PRICE_ID=price_xxx`
+1. Aller dans **Stripe Dashboard > Products > "La Sentinelle"**
+2. Modifier ou créer un prix récurrent : **249€ HT/mois** (recurring, monthly)
+3. Copier le `price_id` généré (format : `price_xxx`)
+4. Aller dans **Vercel > Settings > Environment Variables > `STRIPE_PRICE_ID`**
+5. Coller le nouveau `price_id`
+6. **Redéployer** l'application
+
+> ⚠️ Ne pas modifier un prix existant déjà utilisé par des clients actifs — créer un nouveau prix.
+> Les clients existants gardent leur ancien tarif contractuel.
 
 ### STRIPE — Configurer le Webhook
 **Où :** Stripe Dashboard → Developers → Webhooks → Add endpoint
@@ -148,7 +153,7 @@ Les pages suivantes existent mais contiennent des espaces `[À COMPLÉTER]` :
 - [ ] Remplacer `[À COMPLÉTER]` du directeur de publication
 
 ### /cgu-cgv
-- [ ] Vérifier que le prix de `290€/mois` est correct
+- [ ] Vérifier que le prix de `249€ HT/mois` est correct (tarif lancement)
 - [ ] Vérifier les conditions de résiliation (actuellement : 6 mois d'engagement)
 
 ### /privacy

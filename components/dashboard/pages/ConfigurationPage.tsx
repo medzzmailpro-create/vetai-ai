@@ -107,6 +107,9 @@ export default function ConfigurationPage({ config, onConfigChange, userId }: Pr
   const [transcriptionsEnabled, setTranscriptionsEnabled] = useState(true)
   const [togglingTranscriptions, setTogglingTranscriptions] = useState(false)
 
+  // Transfert toggle auto-save
+  const [togglingTransfert, setTogglingTransfert] = useState(false)
+
   const [initialFormState, setInitialFormState] = useState<FormSnapshot | null>(null)
 
   const getFormState = useCallback((): FormSnapshot => ({
@@ -279,6 +282,23 @@ export default function ConfigurationPage({ config, onConfigChange, userId }: Pr
     }
   }
 
+  const toggleTransfert = async () => {
+    if (!isOwner || togglingTransfert) return
+    const newVal = !transfertEnabled
+    setTogglingTransfert(true)
+    setTransfertEnabled(newVal)
+    try {
+      await supabase.from('clinic_config').update({
+        transfert_enabled: newVal,
+        updated_at: new Date().toISOString(),
+      }).eq('user_id', userId)
+    } catch {
+      setTransfertEnabled(!newVal) // revert on error
+    } finally {
+      setTogglingTransfert(false)
+    }
+  }
+
   const handleJoinClinic = async () => {
     if (!joinClinicId.trim()) { setJoinClinicError('Veuillez entrer un identifiant.'); return }
     setJoiningClinic(true)
@@ -316,7 +336,14 @@ export default function ConfigurationPage({ config, onConfigChange, userId }: Pr
       if (profileClinicId && isOwner) {
         const { error: clinicsErr } = await supabase
           .from('clinics')
-          .update({ name: clinicName.trim(), address: address.trim(), phone: phone.trim(), email: email.trim() })
+          .update({
+            name: clinicName.trim(),
+            address: address.trim(),
+            phone: phone.trim(),
+            email: email.trim(),
+            opening_hours: hours.trim(),
+            clinic_type: clinicType,
+          })
           .eq('id', profileClinicId)
         if (clinicsErr) errors.push(clinicsErr.message)
       }
@@ -564,8 +591,12 @@ export default function ConfigurationPage({ config, onConfigChange, userId }: Pr
                 <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 600, color: '#2A2A28' }}>Transfert vers un humain</div>
                 <div style={{ fontSize: 11, color: '#9E9E9B', marginTop: 2 }}>En cas d&apos;urgence ou de situation sensible</div>
               </div>
-              <div onClick={() => setTransfertEnabled(v => !v)} style={{ width: 42, height: 22, borderRadius: 11, background: transfertEnabled ? '#0A7C6E' : '#D4D4D2', position: 'relative', cursor: 'pointer', flexShrink: 0, transition: 'background 0.2s' }}>
-                <div style={{ position: 'absolute', top: 2, left: transfertEnabled ? undefined : 2, right: transfertEnabled ? 2 : undefined, width: 18, height: 18, background: 'white', borderRadius: '50%' }} />
+              <div
+                onClick={toggleTransfert}
+                title={togglingTransfert ? 'Enregistrement…' : undefined}
+                style={{ width: 42, height: 22, borderRadius: 11, background: transfertEnabled ? '#0A7C6E' : '#D4D4D2', position: 'relative', cursor: togglingTransfert ? 'wait' : 'pointer', flexShrink: 0, transition: 'background 0.2s', opacity: togglingTransfert ? 0.6 : 1 }}
+              >
+                <div style={{ position: 'absolute', top: 2, left: transfertEnabled ? undefined : 2, right: transfertEnabled ? 2 : undefined, width: 18, height: 18, background: 'white', borderRadius: '50%', transition: 'left 0.2s, right 0.2s' }} />
               </div>
             </div>
             {transfertEnabled && (
