@@ -195,13 +195,20 @@ export default function AdminPage() {
     if (cfgErr) errors.push(cfgErr.message)
 
     // 2. Synchronise aussi la table clinics
+    const clinicTypeMap: Record<string, string> = {
+      'Vétérinaire généraliste': 'general',
+      "Clinique d'urgence": 'emergency',
+      'Clinique spécialisée': 'specialized',
+      'Autre': 'other',
+    }
+    const clinicTypeEnum = clinicTypeMap[editConfig.clinic_type ?? ''] ?? 'general'
     const { error: clinicErr } = await supabase.from('clinics').update({
       name: editConfig.clinic_name,
       address: editConfig.address,
       phone: editConfig.phone,
       email: editConfig.email,
       opening_hours: editConfig.hours,
-      clinic_type: editConfig.clinic_type,
+      clinic_type: clinicTypeEnum,
     }).eq('id', configPopup.clinicId)
     if (clinicErr) errors.push(clinicErr.message)
 

@@ -107,6 +107,13 @@ Crée la table `clinic_agents` avec les 6 types d'agents par clinique.
 ### Migration 3 — À exécuter manuellement si besoin
 Si les tables `clinics` ou `clinic_members` n'ont pas de FK, vérifier les contraintes.
 
+### Migration 4 — Toggle Transcriptions (18/03/2026)
+Le toggle "Transcriptions" dans Configuration utilise la table `clinic_agents` **déjà existante**.
+Aucune nouvelle table ni colonne requise.
+La ligne `(clinic_id, agent_type='transcription')` est créée automatiquement via le trigger `init_clinic_agents` au moment de la création d'une clinique.
+
+Si une clinique existante n'a pas encore de ligne `transcription` dans `clinic_agents`, le toggle crée la ligne via `upsert` au premier clic (aucun SQL manuel requis).
+
 ---
 
 ## 🟡 IMPORTANT — APIs Externes

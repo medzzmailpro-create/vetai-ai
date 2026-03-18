@@ -4,13 +4,14 @@ import type { Dispatch, SetStateAction } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { comms } from '../data/mockData'
 import { sectionCard } from '../utils/styles'
-import type { SmsRow } from '../types/types'
+import type { Page, SmsRow } from '../types/types'
 
 type Props = {
   selectedCommId: number | null
   setSelectedCommId: Dispatch<SetStateAction<number | null>>
   isDemo?: boolean
   clinicId?: string
+  setPage?: Dispatch<SetStateAction<Page>>
 }
 
 type TranscriptMessage = {
@@ -78,12 +79,14 @@ function TabBar({ activeTab, setActiveTab }: { activeTab: 'calls' | 'sms'; setAc
   )
 }
 
-export default function CommunicationsPage({ selectedCommId, setSelectedCommId, isDemo = true, clinicId = '' }: Props) {
+export default function CommunicationsPage({ selectedCommId, setSelectedCommId, isDemo = true, clinicId = '', setPage }: Props) {
   const [activeTab, setActiveTab] = useState<'calls' | 'sms'>('calls')
   const [liveComms, setLiveComms] = useState<CommRow[]>([])
   const [smsList, setSmsList] = useState<SmsRow[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedSmsId, setSelectedSmsId] = useState<string | null>(null)
+  const [transcriptionsEnabled, setTranscriptionsEnabled] = useState(true)
+  const [transcriptionsLoading, setTranscriptionsLoading] = useState(true)
 
   useEffect(() => {
     if (isDemo) { setLiveComms(comms as unknown as CommRow[]); return }
@@ -124,6 +127,25 @@ export default function CommunicationsPage({ selectedCommId, setSelectedCommId, 
     load()
   }, [isDemo, clinicId])
 
+  // Load transcriptions enabled status from clinic_agents
+  useEffect(() => {
+    if (isDemo || !clinicId) { setTranscriptionsLoading(false); return }
+    const load = async () => {
+      try {
+        const { data } = await supabase
+          .from('clinic_agents')
+          .select('is_enabled')
+          .eq('clinic_id', clinicId)
+          .eq('agent_type', 'transcription')
+          .single()
+        if (data != null) setTranscriptionsEnabled(data.is_enabled)
+        else setTranscriptionsEnabled(true) // default: enabled
+      } catch { setTranscriptionsEnabled(true) }
+      finally { setTranscriptionsLoading(false) }
+    }
+    load()
+  }, [isDemo, clinicId])
+
   useEffect(() => {
     if (isDemo || !clinicId) return
     const load = async () => {
@@ -153,6 +175,34 @@ export default function CommunicationsPage({ selectedCommId, setSelectedCommId, 
   const activeComm = (selectedCommId == null ? commsList[0] : commsList.find((c, i) => (c.id === selectedCommId || i + 1 === selectedCommId))) || commsList[0]
   const messages = activeComm ? parseTranscription(activeComm.transcription) : []
   const selectedSms = smsList.find(s => s.id === selectedSmsId) ?? smsList[0] ?? null
+
+  // Gate: transcriptions disabled for live accounts
+  if (!isDemo && !transcriptionsLoading && !transcriptionsEnabled) {
+    return (
+      <div style={{ ...sectionCard, padding: 48, textAlign: 'center' }}>
+        <div style={{ fontSize: 40, marginBottom: 16 }}>📝</div>
+        <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 16, fontWeight: 700, color: '#2A2A28', marginBottom: 10 }}>
+          Les transcriptions sont désactivées.
+        </div>
+        <div style={{ fontSize: 14, color: '#9E9E9B', lineHeight: 1.7 }}>
+          Vous pouvez les réactiver dans{' '}
+          {setPage ? (
+            <button
+              onClick={() => setPage('configuration')}
+              style={{ background: 'none', border: 'none', color: '#0A7C6E', fontWeight: 700, cursor: 'pointer', fontSize: 14, textDecoration: 'underline', padding: 0 }}
+            >
+              Configurations de la clinique
+            </button>
+          ) : (
+            <a href="/dashboard" style={{ color: '#0A7C6E', fontWeight: 700, textDecoration: 'underline' }}>
+              Configurations de la clinique
+            </a>
+          )}
+          .
+        </div>
+      </div>
+    )
+  }
 
   if (!isDemo && !loading && activeTab === 'calls' && commsList.length === 0) {
     return (

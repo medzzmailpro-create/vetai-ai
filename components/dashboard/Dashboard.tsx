@@ -305,6 +305,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
               setSelectedCommId={setSelectedCommId}
               isDemo={isDemo}
               clinicId={clinicId}
+              setPage={setPage}
             />
           )}
 

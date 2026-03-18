@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { inputStyle, sectionCard } from '../utils/styles'
+import { useApiKeysStatus } from '../hooks/useApiKeysStatus'
 
 export type ClinicConfig = {
   clinic_name: string
@@ -55,7 +56,7 @@ function AccordionSection({
   )
 }
 
-const SECTIONS = ['perso', 'clinique', 'infos', 'agent', 'agenda']
+const SECTIONS = ['perso', 'clinique', 'infos', 'agent', 'agenda', 'transcriptions']
 
 function getInitialOpen() {
   try {
@@ -101,6 +102,10 @@ export default function ConfigurationPage({ config, onConfigChange, userId }: Pr
   const [transfertNumber, setTransfertNumber] = useState(config.transfert_number)
   const [dureeRdv, setDureeRdv] = useState(config.duree_rdv)
   const [bufferRdv, setBufferRdv] = useState(config.buffer_rdv)
+
+  // Transcriptions toggle (saved in clinic_agents table)
+  const [transcriptionsEnabled, setTranscriptionsEnabled] = useState(true)
+  const [togglingTranscriptions, setTogglingTranscriptions] = useState(false)
 
   const [initialFormState, setInitialFormState] = useState<FormSnapshot | null>(null)
 
@@ -150,6 +155,19 @@ export default function ConfigurationPage({ config, onConfigChange, userId }: Pr
         setPersoPhone(loadedPhone)
         loadedClinicId = profile.clinic_id ?? null
         setProfileClinicId(loadedClinicId)
+
+        // Load transcriptions state from clinic_agents
+        if (loadedClinicId) {
+          const { data: transcAgent } = await supabase
+            .from('clinic_agents')
+            .select('is_enabled')
+            .eq('clinic_id', loadedClinicId)
+            .eq('agent_type', 'transcription')
+            .single()
+          if (transcAgent != null) {
+            setTranscriptionsEnabled(transcAgent.is_enabled)
+          }
+        }
 
         if (profile.clinic_id) {
           const { data: clinic } = await supabase
@@ -238,6 +256,28 @@ export default function ConfigurationPage({ config, onConfigChange, userId }: Pr
   }, [clinicName, address, phone, email, hours, clinicType, transfertEnabled, transfertNumber, dureeRdv, bufferRdv])
 
   useEffect(() => { syncUpward() }, [syncUpward])
+
+  // API keys status (same source as AgentsPage)
+  const { hasApiKeys, loading: apiKeysLoading } = useApiKeysStatus(profileClinicId)
+
+  const toggleTranscriptions = async () => {
+    if (!profileClinicId || togglingTranscriptions) return
+    const newVal = !transcriptionsEnabled
+    setTogglingTranscriptions(true)
+    setTranscriptionsEnabled(newVal)
+    try {
+      await supabase
+        .from('clinic_agents')
+        .upsert(
+          { clinic_id: profileClinicId, agent_type: 'transcription', is_enabled: newVal, updated_at: new Date().toISOString() },
+          { onConflict: 'clinic_id,agent_type' }
+        )
+    } catch {
+      setTranscriptionsEnabled(!newVal) // revert on error
+    } finally {
+      setTogglingTranscriptions(false)
+    }
+  }
 
   const handleJoinClinic = async () => {
     if (!joinClinicId.trim()) { setJoinClinicError('Veuillez entrer un identifiant.'); return }
@@ -331,6 +371,34 @@ export default function ConfigurationPage({ config, onConfigChange, userId }: Pr
         </div>
       )}
 
+      {/* 🔴 Bannière clés API manquantes */}
+      {!apiKeysLoading && !hasApiKeys && (
+        <div style={{
+          background: '#FFF5F5', border: '1.5px solid #C53030', borderRadius: 12,
+          padding: '16px 20px', display: 'flex', alignItems: 'flex-start', gap: 14,
+          flexWrap: 'wrap',
+        }}>
+          <span style={{ fontSize: 22, flexShrink: 0 }}>⚠️</span>
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, color: '#C53030', marginBottom: 6 }}>
+              Aucune clé API configurée — Vos agents ne peuvent pas fonctionner.
+            </div>
+            <div style={{ fontSize: 13, color: '#742A2A', lineHeight: 1.6 }}>
+              Rendez-vous dans la{' '}
+              <a href="/dashboard/activate" style={{ color: '#C53030', fontWeight: 700, textDecoration: 'underline' }}>
+                page Activation
+              </a>
+              {' '}pour configurer vos clés.
+              <br />
+              Si vous n&apos;avez pas encore de clés, contactez-nous :{' '}
+              <a href="mailto:medzz.mailpro@gmail.com" style={{ color: '#C53030', fontWeight: 700, textDecoration: 'underline' }}>
+                medzz.mailpro@gmail.com
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Badge rôle */}
       {profileClinicId && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: isOwner ? '#F0FDF8' : '#FFF8E7', border: `1px solid ${isOwner ? '#0A7C6E' : '#F5A623'}`, borderRadius: 10 }}>
@@ -412,8 +480,8 @@ export default function ConfigurationPage({ config, onConfigChange, userId }: Pr
         </div>
       </AccordionSection>
 
-      {/* 🏥 Informations de la clinique */}
-      <AccordionSection id="infos" title="🏥 Informations de la clinique" open={!!open.infos} onToggle={() => toggleSection('infos')}>
+      {/* 🏥 Configurations de la clinique */}
+      <AccordionSection id="infos" title="🏥 Configurations de la clinique" open={!!open.infos} onToggle={() => toggleSection('infos')}>
         {!isOwner && ownerConfig ? (
           // Vue lecture seule pour les membres
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -543,6 +611,48 @@ export default function ConfigurationPage({ config, onConfigChange, userId }: Pr
               </div>
             </div>
           </>
+        )}
+      </AccordionSection>
+
+      {/* 📝 Transcriptions */}
+      <AccordionSection id="transcriptions" title="📝 Transcriptions" open={!!open.transcriptions} onToggle={() => toggleSection('transcriptions')}>
+        {!isOwner && ownerConfig ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ background: '#FFF8E7', border: '1px solid #F5A623', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#92590A', fontFamily: 'Syne, sans-serif', fontWeight: 600 }}>
+              👁 Lecture seule — seul le propriétaire peut modifier
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 600, color: '#2A2A28' }}>Enregistrement des transcriptions</div>
+              <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 100, fontFamily: 'Syne, sans-serif', fontSize: 11, fontWeight: 700, background: transcriptionsEnabled ? '#E8F5F3' : '#F5F5F3', color: transcriptionsEnabled ? '#0A7C6E' : '#9E9E9B', border: transcriptionsEnabled ? '1px solid #0A7C6E' : '1px solid #EBEBEA' }}>
+                {transcriptionsEnabled ? '✅ Activé' : '❌ Désactivé'}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0' }}>
+            <div>
+              <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 600, color: '#2A2A28' }}>Activer l&apos;enregistrement des transcriptions</div>
+              <div style={{ fontSize: 11, color: '#9E9E9B', marginTop: 2 }}>Les appels seront transcrits et accessibles dans Communications</div>
+            </div>
+            <div
+              onClick={toggleTranscriptions}
+              title={togglingTranscriptions ? 'Enregistrement…' : undefined}
+              style={{
+                width: 42, height: 22, borderRadius: 11,
+                background: transcriptionsEnabled ? '#0A7C6E' : '#D4D4D2',
+                position: 'relative', cursor: togglingTranscriptions ? 'wait' : 'pointer',
+                flexShrink: 0, transition: 'background 0.2s', opacity: togglingTranscriptions ? 0.6 : 1,
+              }}
+            >
+              <div style={{
+                position: 'absolute', top: 2,
+                left: transcriptionsEnabled ? undefined : 2,
+                right: transcriptionsEnabled ? 2 : undefined,
+                width: 18, height: 18, background: 'white', borderRadius: '50%',
+                transition: 'left 0.2s, right 0.2s',
+              }} />
+            </div>
+          </div>
         )}
       </AccordionSection>
 

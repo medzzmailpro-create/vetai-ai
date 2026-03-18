@@ -222,7 +222,7 @@ export default function AgentsPage({
 
         {!agentsLoading && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
-            {AGENT_DEFINITIONS.map(agent => {
+            {AGENT_DEFINITIONS.filter(a => a.type !== 'transcription').map(agent => {
               const isActive = getAgentState(agent.type)
               const isTogglingThis = toggling === agent.type
               const isBlocked = !isDemo && !hasApiKeys
@@ -285,7 +285,8 @@ export default function AgentsPage({
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 10, color: '#0A7C6E', fontWeight: 600 }}>via {agent.provider}</span>
+                    {/* provider subtitle hidden per UX decision: <span style={{ fontSize: 10, color: '#0A7C6E', fontWeight: 600 }}>via {agent.provider}</span> */}
+                    <span />
                     <div style={{ display: 'flex', gap: 6 }}>
                       <button
                         onClick={() => setPage('rapports')}
