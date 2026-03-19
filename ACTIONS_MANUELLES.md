@@ -119,6 +119,43 @@ La ligne `(clinic_id, agent_type='transcription')` est créée automatiquement v
 
 Si une clinique existante n'a pas encore de ligne `transcription` dans `clinic_agents`, le toggle crée la ligne via `upsert` au premier clic (aucun SQL manuel requis).
 
+### Migration 5 — Colonne `role` dans `profiles` (19/03/2026)
+La page "Mon équipe" utilise `profiles.role` pour afficher et modifier les rôles des membres.
+
+**Valeurs autorisées :** `owner`, `veterinarian`, `secretary`
+
+**SQL à exécuter dans Supabase Dashboard → SQL Editor :**
+```sql
+-- Ajouter la colonne role si elle n'existe pas
+ALTER TABLE profiles
+  ADD COLUMN IF NOT EXISTS role TEXT;
+
+-- Appliquer la contrainte CHECK (limiter aux 3 valeurs + NULL)
+ALTER TABLE profiles
+  DROP CONSTRAINT IF EXISTS profiles_role_check;
+
+ALTER TABLE profiles
+  ADD CONSTRAINT profiles_role_check
+  CHECK (role IN ('owner', 'veterinarian', 'secretary'));
+
+-- Mettre à jour les propriétaires existants (ceux qui ont owner_user_id dans clinics)
+UPDATE profiles p
+SET role = 'owner'
+FROM clinics c
+WHERE c.owner_user_id = p.id
+  AND (p.role IS NULL OR p.role != 'owner');
+
+-- Mettre à jour les membres existants (staff → veterinarian) si besoin
+UPDATE profiles p
+SET role = 'veterinarian'
+FROM clinic_members cm
+WHERE cm.user_id = p.id
+  AND cm.role = 'staff'
+  AND p.role IS NULL;
+```
+
+**Pourquoi :** La page Mon équipe lit `profiles.role` (owner/veterinarian/secretary) et permet au propriétaire de changer le rôle entre veterinarian et secretary. La suppression d'un membre met `clinic_id = null` et `role = null` dans profiles.
+
 ---
 
 ## 🟡 IMPORTANT — APIs Externes
