@@ -47,14 +47,31 @@ export default function EquipePage({ clinicId, userId, userRole }: Props) {
   const isOwner = userRole === 'owner'
 
   useEffect(() => {
-    if (!clinicId) { setLoading(false); return }
+    if (!userId) { setLoading(false); return }
     const load = async () => {
       setLoading(true)
       try {
+        // Step 1: fetch the authenticated user's own clinic_id
+        const { data: myProfile, error: profileErr } = await supabase
+          .from('profiles')
+          .select('clinic_id')
+          .eq('id', userId)
+          .single()
+
+        if (profileErr || !myProfile?.clinic_id) {
+          setMembers([])
+          setLoading(false)
+          return
+        }
+
+        const myClinicId: string = myProfile.clinic_id
+
+        // Step 2: fetch ALL profiles belonging to that clinic
         const { data } = await supabase
           .from('profiles')
           .select('id, first_name, last_name, email, role, clinic_id, created_at')
-          .eq('clinic_id', clinicId)
+          .eq('clinic_id', myClinicId)
+
         if (data) {
           const sorted = (data as Member[]).sort(
             (a, b) => getRoleOrder(a.role) - getRoleOrder(b.role)
@@ -66,7 +83,7 @@ export default function EquipePage({ clinicId, userId, userRole }: Props) {
       }
     }
     load()
-  }, [clinicId])
+  }, [userId])
 
   const copyId = () => {
     if (!clinicId) return
