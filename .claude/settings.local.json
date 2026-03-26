@@ -56,7 +56,8 @@
       "Bash(grep -r \"sk-\\\\|api_key\\\\|secret\\\\|token\\\\|password\" /d/SaaS/zip/cliniko/app --include=\"*.tsx\" --include=\"*.ts\" 2>/dev/null | grep -v \"node_modules\\\\|.next\" | head -20)",
       "mcp__claude_ai_Supabase__apply_migration",
       "Bash(grep -v \"^$\")",
-      "Bash(grep -r \"clinic_agents\\\\|notification_prefs\\\\|clinic_config\" /d/SaaS/zip/cliniko/components/dashboard/pages/*.tsx)"
+      "Bash(grep -r \"clinic_agents\\\\|notification_prefs\\\\|clinic_config\" /d/SaaS/zip/cliniko/components/dashboard/pages/*.tsx)",
+      "Bash(npx --prefix /d/SaaS/zip/cliniko tsc --noEmit)"
     ]
   }
 }

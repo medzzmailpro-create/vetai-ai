@@ -126,11 +126,17 @@ La page "Mon équipe" utilise `profiles.role` pour afficher et modifier les rôl
 
 **SQL à exécuter dans Supabase Dashboard → SQL Editor :**
 ```sql
--- Ajouter la colonne role si elle n'existe pas
+-- ============================================
+-- MIGRATION 5 — Colonne role dans profiles
+-- Date : 19/03/2026
+-- But : Ajouter les rôles owner / veterinarian / secretary
+-- ============================================
+
+-- 1. Ajouter la colonne role si elle n'existe pas
 ALTER TABLE profiles
   ADD COLUMN IF NOT EXISTS role TEXT;
 
--- Appliquer la contrainte CHECK (limiter aux 3 valeurs + NULL)
+-- 2. Appliquer la contrainte CHECK
 ALTER TABLE profiles
   DROP CONSTRAINT IF EXISTS profiles_role_check;
 
@@ -138,23 +144,99 @@ ALTER TABLE profiles
   ADD CONSTRAINT profiles_role_check
   CHECK (role IN ('owner', 'veterinarian', 'secretary'));
 
--- Mettre à jour les propriétaires existants (ceux qui ont owner_user_id dans clinics)
+-- 3. Mettre à jour les propriétaires existants
 UPDATE profiles p
 SET role = 'owner'
 FROM clinics c
 WHERE c.owner_user_id = p.id
   AND (p.role IS NULL OR p.role != 'owner');
 
--- Mettre à jour les membres existants (staff → veterinarian) si besoin
+-- 4. Mettre à jour les membres staff → veterinarian
 UPDATE profiles p
 SET role = 'veterinarian'
 FROM clinic_members cm
 WHERE cm.user_id = p.id
   AND cm.role = 'staff'
   AND p.role IS NULL;
+
+-- 5. Vérification (à exécuter après)
+SELECT id, email, role FROM profiles ORDER BY role;
 ```
 
+**Checklist post-migration :**
+- [ ] SQL exécuté dans Supabase SQL Editor
+- [ ] Vérifier dans Table Editor → profiles → colonne `role` visible
+- [ ] Tester : le owner a bien role = 'owner'
+- [ ] Tester : la page "Mon équipe" affiche les rôles
+
 **Pourquoi :** La page Mon équipe lit `profiles.role` (owner/veterinarian/secretary) et permet au propriétaire de changer le rôle entre veterinarian et secretary. La suppression d'un membre met `clinic_id = null` et `role = null` dans profiles.
+
+---
+
+### Migration 6 — Colonnes Stripe dans `clinic_members` (26/03/2026)
+
+Le webhook Stripe et la page checkout utilisent ces colonnes pour tracer les abonnements.
+
+**SQL à exécuter dans Supabase Dashboard → SQL Editor :**
+```sql
+-- ============================================
+-- MIGRATION 6 — Colonnes Stripe dans clinic_members
+-- Date : 26/03/2026
+-- But : Stocker les IDs Stripe pour chaque membre/abonnement
+-- ============================================
+
+-- 1. Colonne has_paid (accès payant)
+ALTER TABLE clinic_members
+  ADD COLUMN IF NOT EXISTS has_paid BOOLEAN NOT NULL DEFAULT false;
+
+-- 2. Colonne stripe_customer_id
+ALTER TABLE clinic_members
+  ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
+
+-- 3. Colonne stripe_subscription_id
+ALTER TABLE clinic_members
+  ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT;
+
+-- 4. Vérification
+SELECT id, user_id, has_paid, stripe_customer_id, stripe_subscription_id
+FROM clinic_members
+LIMIT 10;
+```
+
+**Checklist post-migration :**
+- [ ] SQL exécuté dans Supabase SQL Editor
+- [ ] Vérifier Table Editor → clinic_members → colonnes visibles
+- [ ] Tester un paiement Stripe → vérifier que `has_paid = true` se met à jour
+
+**Pourquoi :** Le webhook `checkout.session.completed` écrit `has_paid`, `stripe_customer_id`, `stripe_subscription_id` dans `clinic_members`. La route `create-checkout-session` lit `stripe_customer_id` pour distinguer le premier paiement (490€ + 249€/mois) des paiements suivants (249€/mois seulement).
+
+---
+
+### Migration 7 — Colonne `clinic_id` dans `clinic_members` (26/03/2026)
+
+La cascade d'annulation d'abonnement nécessite de retrouver tous les membres d'une clinique via `clinic_id`.
+
+**SQL à exécuter :**
+```sql
+-- ============================================
+-- MIGRATION 7 — Colonne clinic_id dans clinic_members
+-- Date : 26/03/2026
+-- But : Permettre la cascade Stripe → désactiver tous les membres d'une clinique
+-- ============================================
+
+-- Ajouter clinic_id si manquant (devrait déjà exister)
+ALTER TABLE clinic_members
+  ADD COLUMN IF NOT EXISTS clinic_id UUID REFERENCES clinics(id) ON DELETE CASCADE;
+
+-- Ajouter last_seen si manquant
+ALTER TABLE clinic_members
+  ADD COLUMN IF NOT EXISTS last_seen TIMESTAMPTZ;
+
+-- Vérification
+SELECT user_id, clinic_id, role, has_paid FROM clinic_members LIMIT 10;
+```
+
+**Pourquoi :** Quand Stripe envoie `customer.subscription.deleted`, le webhook retrouve le `clinic_id` via `clinic_members.stripe_subscription_id` puis désactive tous les membres de cette clinique (`has_paid = false` dans `clinic_members` ET `profiles`).
 
 ---
 
@@ -226,6 +308,48 @@ Pour le compte `demo@vetai.ai`, insérer des données de démonstration réalist
 Ces clés ne sont PAS dans le code source (uniquement dans `.env.local`).
 `.env.local` est bien dans `.gitignore` — NE PAS committer ce fichier.
 Si ces clés ont été exposées par accident (git push), les régénérer immédiatement dans les dashboards respectifs.
+
+---
+
+## 🔐 Où renseigner les clés API en toute sécurité
+
+### En local (développement)
+Fichier : `.env.local` (à la racine du projet, **JAMAIS commité**)
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOi...
+
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+
+ANTHROPIC_API_KEY=sk-ant-...
+
+RETELL_API_KEY=key_...
+RETELL_LLM_ID=llm_...
+
+TWILIO_ACCOUNT_SID=AC...
+TWILIO_AUTH_TOKEN=...
+TWILIO_PHONE_NUMBER=+33...
+
+RESEND_API_KEY=re_...
+```
+
+### En production (Vercel)
+1. Va sur https://vercel.com → ton projet → Settings → Environment Variables
+2. Ajoute **CHAQUE** variable ci-dessus
+3. Sélectionne "Production" (et "Preview" si besoin)
+4. Ne **JAMAIS** cocher "Expose to browser" pour les clés secrètes
+5. Seules les variables `NEXT_PUBLIC_*` sont autorisées côté client
+
+### Règles de sécurité absolues
+- **JAMAIS** de clé API dans le code source
+- **JAMAIS** de clé dans un fichier commité sur Git
+- **JAMAIS** de `SUPABASE_SERVICE_ROLE_KEY` côté client
+- **JAMAIS** de `console.log()` avec des clés en production
+- Les webhooks (Stripe, Retell, Twilio) doivent **TOUJOURS** vérifier la signature
 
 ---
 

@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       from_number: from,
       body: messageBody ?? undefined,
       status: messageStatus ?? 'unknown',
-      direction: from === process.env.TWILIO_PHONE_NUMBER ? 'outbound' : 'inbound',
+      direction: params.get('Direction')?.startsWith('outbound') ? 'outbound' : 'inbound',
     }, { onConflict: 'twilio_sid' })
 
   if (error) {

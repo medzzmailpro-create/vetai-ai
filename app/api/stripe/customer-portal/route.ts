@@ -8,7 +8,7 @@ const supabase = createClient(
 
 export async function POST(req: NextRequest) {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://vetai.fr'
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://vetai.fr'
 
   if (!stripeSecretKey) {
     return NextResponse.json({ error: 'Stripe non configuré.' }, { status: 500 })

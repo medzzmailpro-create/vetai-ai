@@ -6,7 +6,6 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { supabase } from '@/lib/supabase/client'
 
-const STRIPE_URL = process.env.NEXT_PUBLIC_STRIPE_URL ?? 'https://buy.stripe.com/VOTRE_LIEN_STRIPE'
 const PLACES_RESTANTES = parseInt(process.env.NEXT_PUBLIC_PLACES_RESTANTES ?? '3', 10)
 
 // ── Value Stack ──────────────────────────────────────────────────────────────
@@ -106,14 +105,34 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
 export default function Pricing() {
   const ref = useScrollAnimation()
   const router = useRouter()
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [checkoutError, setCheckoutError] = useState('')
 
   const handleCheckout = async () => {
+    setCheckoutError('')
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       router.push('/register?redirect=/pricing')
       return
     }
-    window.open(STRIPE_URL, '_blank', 'noreferrer')
+    setCheckoutLoading(true)
+    try {
+      const res = await fetch('/api/stripe/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      })
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        setCheckoutError(data.error ?? 'Erreur lors de la redirection vers le paiement.')
+        setCheckoutLoading(false)
+      }
+    } catch {
+      setCheckoutError('Erreur réseau. Veuillez réessayer.')
+      setCheckoutLoading(false)
+    }
   }
 
   return (
@@ -466,11 +485,15 @@ export default function Pricing() {
             {/* CTA PRINCIPAL */}
             <button
               onClick={handleCheckout}
+              disabled={checkoutLoading}
               style={{
                 display: 'flex', justifyContent: 'center', alignItems: 'center',
                 gap: 10, width: '100%',
-                background: 'linear-gradient(135deg, #0A7C6E 0%, #0D9E8D 100%)',
-                color: 'white', border: 'none', cursor: 'pointer',
+                background: checkoutLoading
+                  ? 'linear-gradient(135deg, #5BAD9F 0%, #5BBDAE 100%)'
+                  : 'linear-gradient(135deg, #0A7C6E 0%, #0D9E8D 100%)',
+                color: 'white', border: 'none',
+                cursor: checkoutLoading ? 'not-allowed' : 'pointer',
                 padding: '20px 32px', borderRadius: 14,
                 fontFamily: 'Syne, sans-serif', fontSize: 17, fontWeight: 700,
                 boxShadow: '0 6px 24px rgba(10,124,110,0.35)',
@@ -478,16 +501,24 @@ export default function Pricing() {
                 transition: 'transform 0.15s, box-shadow 0.15s',
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.transform = 'translateY(-2px)'
-                e.currentTarget.style.boxShadow = '0 12px 36px rgba(10,124,110,0.45)'
+                if (!checkoutLoading) {
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 12px 36px rgba(10,124,110,0.45)'
+                }
               }}
               onMouseLeave={e => {
                 e.currentTarget.style.transform = ''
                 e.currentTarget.style.boxShadow = '0 6px 24px rgba(10,124,110,0.35)'
               }}
             >
-              Activer La Sentinelle — 249€ HT/mois →
+              {checkoutLoading ? 'Redirection vers le paiement…' : 'Activer La Sentinelle — 249€ HT/mois →'}
             </button>
+
+            {checkoutError && (
+              <p style={{ textAlign: 'center', fontSize: 13, color: '#C53030', marginTop: 8, fontWeight: 500 }}>
+                ⚠️ {checkoutError}
+              </p>
+            )}
 
             <p style={{ textAlign: 'center', fontSize: 12, color: '#9E9E9B', marginTop: 10 }}>
               ⚡ Opérationnel en 48h · Formation incluse · Sans engagement · Garanti 30 jours
