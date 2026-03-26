@@ -2,15 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY is not defined')
+  return new Stripe(process.env.STRIPE_SECRET_KEY)
+}
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = getSupabaseAdmin()
+    const stripe = getStripe()
     const monthlyPriceId = process.env.STRIPE_PRICE_ID
     const setupPriceId = process.env.STRIPE_SETUP_PRICE_ID
     const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://vetai.fr'

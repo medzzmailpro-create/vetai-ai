@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendSms } from '@/lib/services/twilio'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 function verifyToolSecret(req: NextRequest): boolean {
   const secret = process.env.API_TOOL_SECRET
@@ -55,6 +57,7 @@ export async function GET(req: NextRequest) {
 }
 
 async function handleBookAppointment(body: Record<string, string>) {
+  const supabase = getSupabaseAdmin()
   const { client_name, animal_name, date, heure, motif, phone, species } = body
 
   const { data, error } = await supabase.from('appointments').insert({
@@ -94,6 +97,7 @@ async function handleBookAppointment(body: Record<string, string>) {
 }
 
 async function handleCheckAvailability(params: Record<string, string>) {
+  const supabase = getSupabaseAdmin()
   const { date, duration_minutes = '30' } = params
 
   const { data: existing } = await supabase
@@ -121,6 +125,7 @@ async function handleCheckAvailability(params: Record<string, string>) {
 }
 
 async function handleGetClientInfo(params: Record<string, string>) {
+  const supabase = getSupabaseAdmin()
   const { phone, name } = params
 
   let query = supabase.from('clients').select('*')
@@ -156,6 +161,7 @@ async function handleSendSms(body: Record<string, string>) {
 }
 
 async function handleGetAppointments(params: Record<string, string>) {
+  const supabase = getSupabaseAdmin()
   const { limit = '5', date_from } = params
 
   let query = supabase

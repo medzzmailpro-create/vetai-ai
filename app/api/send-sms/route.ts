@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import twilio from 'twilio'
 
-const client = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-)
+function getTwilio() {
+  return twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+}
 
 export async function POST(req: NextRequest) {
   try {
     const { to, message, fromPhone } = await req.json()
 
-    await client.messages.create({
+    await getTwilio().messages.create({
       body: message,
       from: fromPhone, // numéro Twilio de la clinique
       to: to,          // numéro du client

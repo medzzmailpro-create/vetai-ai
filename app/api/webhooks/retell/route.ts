@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createHmac, timingSafeEqual } from 'crypto'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 // Vérification HMAC-SHA256 de la signature Retell AI
 function verifyRetellSignature(req: NextRequest, body: string): boolean {
@@ -28,6 +30,7 @@ function verifyRetellSignature(req: NextRequest, body: string): boolean {
 }
 
 export async function POST(req: NextRequest) {
+  const supabase = getSupabaseAdmin()
   const body = await req.text()
 
   if (!verifyRetellSignature(req, body)) {
@@ -92,6 +95,7 @@ export async function POST(req: NextRequest) {
 }
 
 async function sendSmsConfirmation(toNumber: string, message: string) {
+  const supabase = getSupabaseAdmin()
   const accountSid = process.env.TWILIO_ACCOUNT_SID
   const authToken = process.env.TWILIO_AUTH_TOKEN
   const fromNumber = process.env.TWILIO_PHONE_NUMBER
