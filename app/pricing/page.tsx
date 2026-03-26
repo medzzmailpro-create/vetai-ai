@@ -112,7 +112,7 @@ export default function Pricing() {
     setCheckoutError('')
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      router.push('/register?redirect=/pricing')
+      router.push('/register?plan=sentinelle')
       return
     }
     setCheckoutLoading(true)

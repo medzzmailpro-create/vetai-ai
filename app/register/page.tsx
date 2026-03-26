@@ -27,6 +27,7 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [stripeLoading, setStripeLoading] = useState(false)
 
   const handleRegister = async () => {
     if (!prenom.trim() || !email.trim() || !password || !confirmPassword) {
@@ -49,8 +50,9 @@ export default function RegisterPage() {
     setError('')
     setLoading(true)
 
-    const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== 'undefined' ? window.location.origin : '')
-    const { error: authError } = await supabase.auth.signUp({
+    const plan = new URLSearchParams(window.location.search).get('plan')
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin
+    const { data, error: authError } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password,
       options: {
@@ -69,10 +71,39 @@ export default function RegisterPage() {
       return
     }
 
+    // Si plan=sentinelle et user créé → rediriger vers Stripe Checkout
+    if (plan === 'sentinelle' && data?.user) {
+      setLoading(false)
+      setStripeLoading(true)
+      try {
+        const res = await fetch('/api/stripe/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: data.user.id,
+            email: email.trim().toLowerCase(),
+          }),
+        })
+        const checkout = await res.json()
+        if (checkout.url) {
+          window.location.href = checkout.url
+          return
+        }
+        // Si l'API Stripe échoue → afficher l'écran de vérification email en fallback
+        console.error('Stripe checkout error:', checkout.error)
+      } catch (err) {
+        console.error('Erreur réseau Stripe:', err)
+      }
+      setStripeLoading(false)
+    } else {
+      setLoading(false)
+    }
+
     setSuccess(true)
   }
 
   const hasError = !!error
+  const isProcessing = loading || stripeLoading
 
   if (success) {
     return (
@@ -199,16 +230,16 @@ export default function RegisterPage() {
 
         <button
           onClick={handleRegister}
-          disabled={loading}
+          disabled={isProcessing}
           style={{
             width: '100%', padding: '15px 24px',
-            background: loading ? '#9E9E9B' : '#0A7C6E',
+            background: isProcessing ? '#9E9E9B' : '#0A7C6E',
             color: 'white', border: 'none', borderRadius: 8,
             fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 16,
-            cursor: loading ? 'not-allowed' : 'pointer',
+            cursor: isProcessing ? 'not-allowed' : 'pointer',
             marginBottom: 16,
           }}>
-          {loading ? 'Création du compte…' : 'Créer mon compte →'}
+          {stripeLoading ? 'Redirection vers le paiement…' : loading ? 'Création du compte…' : 'Créer mon compte →'}
         </button>
 
         <p style={{ fontSize: 13, color: '#9E9E9B', textAlign: 'center', marginBottom: 12 }}>

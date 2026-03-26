@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json().catch(() => ({}))
     const userId = body.userId as string | undefined
+    const emailParam = body.email as string | undefined
 
     if (!userId) {
       return NextResponse.json(
@@ -42,18 +43,15 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { data: profile, error: profileError } = await supabase
+    // Profile may not exist yet if called right after sign-up (before email confirmation)
+    // Use passed email as fallback
+    const { data: profile } = await supabase
       .from('profiles')
       .select('email')
       .eq('id', userId)
       .single()
 
-    if (profileError) {
-      return NextResponse.json(
-        { error: 'Impossible de récupérer le profil utilisateur.' },
-        { status: 400 }
-      )
-    }
+    const customerEmail = profile?.email ?? emailParam
 
     // Check if this user already has a Stripe customer (returning customer)
     const { data: memberData } = await supabase
@@ -108,7 +106,7 @@ export async function POST(req: NextRequest) {
         ],
         success_url: `${siteUrl}/dashboard?payment=success`,
         cancel_url: `${siteUrl}/pricing?payment=cancelled`,
-        customer_email: profile?.email ?? undefined,
+        customer_email: customerEmail ?? undefined,
         metadata: {
           user_id: userId,
         },

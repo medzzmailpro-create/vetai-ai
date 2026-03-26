@@ -57,7 +57,8 @@
       "mcp__claude_ai_Supabase__apply_migration",
       "Bash(grep -v \"^$\")",
       "Bash(grep -r \"clinic_agents\\\\|notification_prefs\\\\|clinic_config\" /d/SaaS/zip/cliniko/components/dashboard/pages/*.tsx)",
-      "Bash(npx --prefix /d/SaaS/zip/cliniko tsc --noEmit)"
+      "Bash(npx --prefix /d/SaaS/zip/cliniko tsc --noEmit)",
+      "Bash(npm run:*)"
     ]
   }
 }
