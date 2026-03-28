@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { SIDEBAR_ITEMS } from '../data/constants'
-import type { Page } from '../types/types'
+import type { Page, UserRole } from '../types/types'
 
 type Props = {
   page: Page
@@ -12,7 +12,7 @@ type Props = {
   clinicName: string
   sidebarOpenMobile: boolean
   setSidebarOpenMobile: Dispatch<SetStateAction<boolean>>
-  userRole?: 'owner' | 'staff'
+  userRole?: UserRole
   userFirstName?: string
   userLastName?: string
 }

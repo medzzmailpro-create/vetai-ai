@@ -21,10 +21,10 @@ const inputStyle = {
 export default function PaymentRequiredPage() {
   const router = useRouter()
   const [showJoinModal, setShowJoinModal] = useState(false)
+  const [joinedClinicName, setJoinedClinicName] = useState<string | null>(null)
   const [clinicIdInput, setClinicIdInput] = useState('')
   const [joinLoading, setJoinLoading] = useState(false)
   const [joinError, setJoinError] = useState('')
-  const [joinSuccess, setJoinSuccess] = useState('')
   const [isOwner, setIsOwner] = useState<boolean | null>(null)
 
   useEffect(() => {
@@ -53,7 +53,6 @@ export default function PaymentRequiredPage() {
     }
     setJoinLoading(true)
     setJoinError('')
-    setJoinSuccess('')
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -82,7 +81,7 @@ export default function PaymentRequiredPage() {
       const { error: memberErr } = await supabase.from('clinic_members').upsert({
         user_id: user.id,
         clinic_id: clinic.id,
-        role: 'staff',
+        role: 'veterinaire',
         has_paid: false,
       }, { onConflict: 'user_id' })
 
@@ -92,8 +91,7 @@ export default function PaymentRequiredPage() {
         return
       }
 
-      setJoinSuccess(`✓ Vous avez rejoint "${clinic.name}" ! Redirection...`)
-      setTimeout(() => router.push('/dashboard'), 1500)
+      setJoinedClinicName(clinic.name)
     } catch {
       setJoinError('Une erreur est survenue. Réessayez.')
     } finally {
@@ -127,9 +125,38 @@ export default function PaymentRequiredPage() {
           Vetai<div style={{ width: 7, height: 7, background: '#F5A623', borderRadius: '50%' }} />
         </div>
 
-        <div style={{ fontSize: 48, marginBottom: 20 }}>🔒</div>
+        {/* ── Succès : clinique rejointe ─────────────────────────────── */}
+        {joinedClinicName && (
+          <>
+            <div style={{ fontSize: 56, marginBottom: 16 }}>🎉</div>
+            <div style={{
+              fontFamily: 'Syne, sans-serif', fontSize: 22, fontWeight: 800,
+              color: '#141412', marginBottom: 12,
+            }}>
+              Clinique rejointe !
+            </div>
+            <p style={{ fontSize: 15, color: '#5C5C59', lineHeight: 1.7, marginBottom: 28 }}>
+              Vous avez rejoint <strong>&quot;{joinedClinicName}&quot;</strong> avec succès.
+              Vous pouvez maintenant accéder à votre tableau de bord.
+            </p>
+            <button
+              onClick={() => router.push('/dashboard')}
+              style={{
+                display: 'block', width: '100%', padding: '14px 24px',
+                background: 'linear-gradient(135deg, #0A7C6E 0%, #0D9E8D 100%)',
+                color: 'white', border: 'none', borderRadius: 10,
+                fontFamily: 'Syne, sans-serif', fontSize: 15, fontWeight: 700,
+                cursor: 'pointer', boxShadow: '0 4px 16px rgba(10,124,110,0.3)',
+              }}
+            >
+              Accéder au dashboard →
+            </button>
+          </>
+        )}
 
-        {!showJoinModal ? (
+        {!joinedClinicName && <div style={{ fontSize: 48, marginBottom: 20 }}>🔒</div>}
+
+        {!joinedClinicName && !showJoinModal && (
           <>
             <div style={{
               fontFamily: 'Syne, sans-serif', fontSize: 22, fontWeight: 800,
@@ -200,7 +227,9 @@ export default function PaymentRequiredPage() {
               </button>
             </div>
           </>
-        ) : (
+        )}
+
+        {!joinedClinicName && showJoinModal && (
           <div>
             <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 22, fontWeight: 800, color: '#141412', marginBottom: 12, letterSpacing: '-0.01em' }}>
               Rejoindre une clinique
@@ -218,9 +247,6 @@ export default function PaymentRequiredPage() {
 
             {joinError && (
               <div style={{ fontSize: 12, color: '#E53E3E', marginBottom: 10, textAlign: 'left' }}>⚠️ {joinError}</div>
-            )}
-            {joinSuccess && (
-              <div style={{ fontSize: 12, color: '#0A7C6E', marginBottom: 10, fontWeight: 600 }}>{joinSuccess}</div>
             )}
 
             <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>

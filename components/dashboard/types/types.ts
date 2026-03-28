@@ -2,6 +2,14 @@
 export const PAGES = ['overview', 'clients', 'agenda', 'comms', 'agents-dash', 'rapports', 'facturation', 'securite', 'configuration', 'settings', 'equipe'] as const
 export type Page = typeof PAGES[number]
 
+// Rôles clinic_members (post-migration 9)
+export type UserRole = 'proprietaire' | 'responsable' | 'veterinaire' | 'secretaire'
+
+// Helper : rôles avec droits de gestion (modifier/retirer des membres, voir l'ID clinique)
+export function canManageTeam(role: UserRole): boolean {
+  return role === 'proprietaire' || role === 'responsable'
+}
+
 export type Period = '24H' | '7J' | '30J' | '90J' | 'TOUT' | 'CUSTOM'
 export type ReportRange = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'custom'
 
@@ -174,7 +182,7 @@ export type ClinicMember = {
   id: string
   clinic_id: string
   user_id: string
-  role: 'owner' | 'staff' | 'support' | string
+  role: UserRole | string
   has_paid: boolean
   last_seen: string | null
   created_at: string

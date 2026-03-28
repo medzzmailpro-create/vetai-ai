@@ -3,10 +3,11 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { inputStyle, sectionCard } from '../utils/styles'
 import type { ClinicConfig } from '../Dashboard'
+import type { UserRole } from '../types/types'
 
 type Props = {
   userId: string
-  userRole: 'owner' | 'staff'
+  userRole: UserRole
   clinicConfig: ClinicConfig
   onConfigChange: (cfg: Record<string, unknown>) => void
 }
@@ -49,7 +50,7 @@ const FAQ_ITEMS: { q: string; a: string }[] = [
 ]
 
 export default function SettingsPage({ userId, userRole, clinicConfig, onConfigChange }: Props) {
-  const isStaff = userRole === 'staff'
+  const isStaff = userRole === 'veterinaire' || userRole === 'secretaire'
   void isStaff // may be used in future tabs
 
   // Notification prefs state

@@ -310,6 +310,58 @@ NEXT_PUBLIC_STRIPE_URL=https://buy.stripe.com/aFacN4b9adchgqqfKNdnW00
 
 ---
 
+### Migration 9 — Nouveau système de rôles dans `clinic_members` (28/03/2026)
+
+Remplace les rôles `owner/admin/staff/viewer` par `proprietaire/responsable/veterinaire/secretaire`.
+
+**SQL à exécuter dans Supabase Dashboard → SQL Editor :**
+```sql
+-- ============================================
+-- MIGRATION 9 — Nouveau système de rôles clinic_members
+-- Date : 28/03/2026
+-- But : Passer à 4 rôles métier clairs
+-- ============================================
+
+-- 1. Supprimer la contrainte CHECK existante si elle existe
+ALTER TABLE clinic_members
+  DROP CONSTRAINT IF EXISTS clinic_members_role_check;
+
+-- 2. Migrer les anciennes valeurs
+UPDATE clinic_members SET role = 'proprietaire' WHERE role = 'owner';
+UPDATE clinic_members SET role = 'responsable'  WHERE role = 'admin';
+UPDATE clinic_members SET role = 'veterinaire'  WHERE role IN ('staff', 'veterinarian');
+UPDATE clinic_members SET role = 'secretaire'   WHERE role IN ('viewer', 'secretary');
+
+-- 3. Idem dans profiles si role y est stocké
+UPDATE profiles SET role = 'proprietaire' WHERE role = 'owner';
+UPDATE profiles SET role = 'responsable'  WHERE role = 'admin';
+UPDATE profiles SET role = 'veterinaire'  WHERE role IN ('staff', 'veterinarian');
+UPDATE profiles SET role = 'secretaire'   WHERE role IN ('viewer', 'secretary');
+
+-- 4. Appliquer la nouvelle contrainte CHECK
+ALTER TABLE clinic_members
+  ADD CONSTRAINT clinic_members_role_check
+  CHECK (role IN ('proprietaire', 'responsable', 'veterinaire', 'secretaire'));
+
+-- 5. Vérification
+SELECT user_id, clinic_id, role FROM clinic_members ORDER BY role;
+```
+
+**Règles métier à respecter :**
+- `proprietaire` : 1 seul par clinique (le créateur)
+- `responsable` : plusieurs possibles, droits élargis
+- `veterinaire` : accès limité, pas de gestion d'équipe
+- `secretaire` : accès limité, pas de gestion d'équipe
+
+**Checklist post-migration :**
+- [ ] SQL exécuté dans Supabase SQL Editor
+- [ ] Vérifier Table Editor → clinic_members → colonne role mise à jour
+- [ ] Tester que le propriétaire voit le badge 👑 dans "Mon équipe"
+- [ ] Tester le changement de rôle en temps réel (Supabase Realtime)
+- [ ] Tester le transfert de propriété (vérification mot de passe)
+
+---
+
 ### STRIPE — Ajouter les événements webhook `invoice.paid`
 **Où :** Stripe Dashboard → Developers → Webhooks → votre endpoint
 **Quoi :** Ajouter l'événement `invoice.paid` à la liste des événements écoutés.

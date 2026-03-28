@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { sectionCard } from '../utils/styles'
-import type { InvoiceRow } from '../types/types'
+import type { InvoiceRow, UserRole } from '../types/types'
 
-const PORTAL_URL = process.env.NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL ?? '#'
+const PORTAL_URL = 'https://billing.stripe.com/p/login/aFacN4b9adchgqqfKNdnW00'
 
 const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {
   paid: { bg: '#C6F6D5', color: '#276749', label: 'Payée' },
@@ -13,7 +13,9 @@ const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }>
   overdue: { bg: '#FED7D7', color: '#9B2C2C', label: 'En retard' },
 }
 
-export default function BillingPage({ clinicId }: { clinicId: string }) {
+export default function BillingPage({ clinicId, userRole }: { clinicId: string; userRole: UserRole }) {
+  const isRestricted = userRole === 'veterinaire' || userRole === 'secretaire'
+  const isReadOnly   = userRole === 'responsable'
   const [invoices, setInvoices] = useState<InvoiceRow[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -54,12 +56,21 @@ export default function BillingPage({ clinicId }: { clinicId: string }) {
   }, [clinicId])
 
   const openPortal = () => {
-    if (PORTAL_URL === '#') {
-      alert('Portail Stripe non configuré. Ajoutez NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL dans .env.local')
-      return
-    }
-
     window.open(PORTAL_URL, '_blank', 'noopener,noreferrer')
+  }
+
+  if (isRestricted) {
+    return (
+      <div style={{ ...sectionCard, padding: 40, textAlign: 'center' }}>
+        <div style={{ fontSize: 40, marginBottom: 12 }}>🔒</div>
+        <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 16, fontWeight: 700, color: '#2A2A28', marginBottom: 8 }}>
+          Accès restreint
+        </div>
+        <div style={{ fontSize: 14, color: '#9E9E9B' }}>
+          La facturation est gérée par le responsable de la clinique.
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -131,70 +142,50 @@ export default function BillingPage({ clinicId }: { clinicId: string }) {
           Toutes les opérations de facturation sont gérées de façon sécurisée via le <strong>portail Stripe</strong>.
         </div>
 
+        {isReadOnly && (
+          <div style={{ background: '#FFF9E6', border: '1px solid #F6E05E', borderRadius: 8, padding: '10px 14px', marginBottom: 12, fontSize: 13, color: '#975A16' }}>
+            Mode lecture seule — la gestion de l&apos;abonnement est réservée au propriétaire.
+          </div>
+        )}
+
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
           <button
-            onClick={openPortal}
+            onClick={isReadOnly ? undefined : openPortal}
+            disabled={isReadOnly}
             style={{
-              padding: '8px 14px',
-              borderRadius: 999,
-              border: 'none',
-              background: '#0A7C6E',
-              color: 'white',
-              fontFamily: 'Syne, sans-serif',
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: 'pointer',
+              padding: '8px 14px', borderRadius: 999, border: 'none',
+              background: isReadOnly ? '#9E9E9B' : '#0A7C6E',
+              color: 'white', fontFamily: 'Syne, sans-serif', fontSize: 12, fontWeight: 600,
+              cursor: isReadOnly ? 'not-allowed' : 'pointer', opacity: isReadOnly ? 0.6 : 1,
             }}
           >
             Gérer mon abonnement →
           </button>
 
-          <button
-            onClick={openPortal}
-            style={{
-              padding: '8px 14px',
-              borderRadius: 999,
-              border: '1px solid #D4D4D2',
-              background: 'white',
-              color: '#5C5C59',
-              fontFamily: 'Syne, sans-serif',
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            Voir mes factures
-          </button>
+          {(['Voir mes factures', 'Mettre à jour le paiement'] as const).map(label => (
+            <button
+              key={label}
+              onClick={isReadOnly ? undefined : openPortal}
+              disabled={isReadOnly}
+              style={{
+                padding: '8px 14px', borderRadius: 999,
+                border: '1px solid #D4D4D2', background: 'white', color: '#5C5C59',
+                fontFamily: 'Syne, sans-serif', fontSize: 12, fontWeight: 600,
+                cursor: isReadOnly ? 'not-allowed' : 'pointer', opacity: isReadOnly ? 0.6 : 1,
+              }}
+            >
+              {label}
+            </button>
+          ))}
 
           <button
-            onClick={openPortal}
+            onClick={isReadOnly ? undefined : openPortal}
+            disabled={isReadOnly}
             style={{
-              padding: '8px 14px',
-              borderRadius: 999,
-              border: '1px solid #D4D4D2',
-              background: 'white',
-              color: '#5C5C59',
-              fontFamily: 'Syne, sans-serif',
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            Mettre à jour le paiement
-          </button>
-
-          <button
-            onClick={openPortal}
-            style={{
-              padding: '8px 14px',
-              borderRadius: 999,
-              border: '1px solid #FFCDD2',
-              background: 'white',
-              color: '#C53030',
-              fontFamily: 'Syne, sans-serif',
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: 'pointer',
+              padding: '8px 14px', borderRadius: 999,
+              border: '1px solid #FFCDD2', background: 'white', color: '#C53030',
+              fontFamily: 'Syne, sans-serif', fontSize: 12, fontWeight: 600,
+              cursor: isReadOnly ? 'not-allowed' : 'pointer', opacity: isReadOnly ? 0.6 : 1,
             }}
           >
             Annuler l&apos;abonnement

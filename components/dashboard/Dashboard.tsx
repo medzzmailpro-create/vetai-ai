@@ -18,7 +18,7 @@ import FirstLoginPopup from './modals/FirstLoginPopup'
 import AppointmentModal from './modals/AppointmentModal'
 import AgentConfigModal from './modals/AgentConfigModal'
 import { clientsData, agents } from './data/mockData'
-import type { Page, Period, ReportRange, NotifRow } from './types/types'
+import type { Page, Period, ReportRange, NotifRow, UserRole } from './types/types'
 
 export type ClinicConfig = {
   clinic_name: string
@@ -76,7 +76,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [userEmail, setUserEmail] = useState<string>('')
   const [userFirstName, setUserFirstName] = useState<string>('')
   const [userLastName, setUserLastName] = useState<string>('')
-  const [userRole, setUserRole] = useState<'owner' | 'staff'>('owner')
+  const [userRole, setUserRole] = useState<UserRole>('proprietaire')
   const [clinicConfig, setClinicConfig] = useState<ClinicConfig>(DEFAULT_CONFIG)
   const [showSetupPopup, setShowSetupPopup] = useState(false)
   const [configLoading, setConfigLoading] = useState(true)
@@ -175,7 +175,22 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
           .eq('user_id', user.id)
           .single()
 
-        if (memberData?.role === 'staff') setUserRole('staff')
+        if (memberData?.role) {
+          const ROLE_MAP: Record<string, UserRole> = {
+            proprietaire: 'proprietaire',
+            responsable:  'responsable',
+            veterinaire:  'veterinaire',
+            secretaire:   'secretaire',
+            // compatibilité anciens rôles
+            owner:        'proprietaire',
+            admin:        'responsable',
+            staff:        'veterinaire',
+            veterinarian: 'veterinaire',
+            secretary:    'secretaire',
+            viewer:       'secretaire',
+          }
+          setUserRole(ROLE_MAP[memberData.role] ?? 'veterinaire')
+        }
       } catch {
       } finally {
         setConfigLoading(false)
@@ -451,19 +466,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
             />
           )}
 
-          {page === 'facturation' && userRole === 'owner' && <BillingPage clinicId={clinicId} />}
-
-          {page === 'facturation' && userRole === 'staff' && (
-            <div style={{ background: 'white', border: '1px solid #EBEBEA', borderRadius: 12, padding: 40, textAlign: 'center' }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>🔒</div>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 16, fontWeight: 700, color: '#2A2A28', marginBottom: 8 }}>
-                Accès restreint
-              </div>
-              <div style={{ fontSize: 14, color: '#9E9E9B' }}>
-                La facturation est réservée aux propriétaires de la clinique.
-              </div>
-            </div>
-          )}
+          {page === 'facturation' && <BillingPage clinicId={clinicId} userRole={userRole} />}
 
           {page === 'equipe' && <EquipePage clinicId={clinicId} userId={userId} userRole={userRole} />}
           {page === 'securite' && <SecurityPage />}
@@ -473,6 +476,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
               config={clinicConfig}
               onConfigChange={setClinicConfig}
               userId={userId}
+              userRole={userRole}
             />
           )}
         </main>

@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { inputStyle, sectionCard } from '../utils/styles'
 import { useApiKeysStatus } from '../hooks/useApiKeysStatus'
+import type { UserRole } from '../types/types'
 
 export type ClinicConfig = {
   clinic_name: string
@@ -22,6 +23,7 @@ type Props = {
   config: ClinicConfig
   onConfigChange: (config: ClinicConfig) => void
   userId: string
+  userRole?: UserRole
 }
 
 type ToastState = { message: string; type: 'success' | 'error' }
@@ -66,7 +68,9 @@ function getInitialOpen() {
   return Object.fromEntries(SECTIONS.map(s => [s, true]))
 }
 
-export default function ConfigurationPage({ config, onConfigChange, userId }: Props) {
+export default function ConfigurationPage({ config, onConfigChange, userId, userRole }: Props) {
+  const isReadOnly = userRole === 'veterinaire' || userRole === 'secretaire'
+
   const [open, setOpen] = useState<Record<string, boolean>>(getInitialOpen)
   const [isOwner, setIsOwner] = useState(false)
   const [ownerConfig, setOwnerConfig] = useState<ClinicConfig | null>(null)
@@ -404,6 +408,24 @@ export default function ConfigurationPage({ config, onConfigChange, userId }: Pr
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
+      {/* Bandeau lecture seule */}
+      {isReadOnly && (
+        <div style={{
+          background: '#FFF9E6', border: '1.5px solid #F6E05E', borderRadius: 12,
+          padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 12,
+        }}>
+          <span style={{ fontSize: 20 }}>🔒</span>
+          <div>
+            <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, color: '#975A16' }}>
+              Mode lecture seule
+            </div>
+            <div style={{ fontSize: 13, color: '#975A16', marginTop: 2 }}>
+              La modification de la configuration est réservée au propriétaire et aux responsables.
+            </div>
+          </div>
+        </div>
+      )}
+
       {toast && (
         <div style={{
           position: 'fixed', top: 20, right: 20, zIndex: 9999,
@@ -453,6 +475,9 @@ export default function ConfigurationPage({ config, onConfigChange, userId }: Pr
           </span>
         </div>
       )}
+
+      {/* Sections de configuration — lecture seule si vétérinaire ou secrétaire */}
+      <div style={isReadOnly ? { pointerEvents: 'none', opacity: 0.65 } : {}}>
 
       {/* 🪪 Informations personnelles */}
       <AccordionSection id="perso" title="🪪 Informations personnelles" open={!!open.perso} onToggle={() => toggleSection('perso')}>
@@ -705,8 +730,8 @@ export default function ConfigurationPage({ config, onConfigChange, userId }: Pr
         )}
       </AccordionSection>
 
-      {/* Bouton save — seulement pour owner */}
-      {isOwner && (
+      {/* Bouton save — seulement pour owner, masqué si lecture seule */}
+      {isOwner && !isReadOnly && (
         <div style={{ paddingTop: 8 }}>
           <button
             onClick={handleSave}
@@ -727,6 +752,8 @@ export default function ConfigurationPage({ config, onConfigChange, userId }: Pr
           )}
         </div>
       )}
+
+      </div>{/* end isReadOnly wrapper */}
     </div>
   )
 }
