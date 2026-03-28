@@ -51,7 +51,7 @@ export async function middleware(request: NextRequest) {
           // 2. Vérifier le statut trial/abonnement dans la table clinics
           const { data: member } = await supabase
             .from('clinic_members')
-            .select('clinic_id')
+            .select('clinic_id, role')
             .eq('user_id', session.user.id)
             .single()
 
@@ -69,17 +69,26 @@ export async function middleware(request: NextRequest) {
                 clinic.trial_end != null &&
                 new Date(clinic.trial_end) < now
 
-              const isBlocked =
-                trialExpired ||
-                clinic.subscription_status === 'expired' ||
-                clinic.subscription_status === 'cancelled' ||
-                clinic.is_active === false ||
-                clinic.subscription_status === 'none'
+              // Membre staff (non-propriétaire) : seuls les états explicitement
+              // terminés bloquent l'accès. 'none' / null / 'active' / 'trial' → ok.
+              const isStaffMember =
+                member.role !== 'proprietaire' && member.role !== 'owner'
+
+              const isBlocked = isStaffMember
+                ? (trialExpired ||
+                   clinic.subscription_status === 'expired' ||
+                   clinic.subscription_status === 'cancelled' ||
+                   clinic.is_active === false)
+                : (trialExpired ||
+                   clinic.subscription_status === 'expired' ||
+                   clinic.subscription_status === 'cancelled' ||
+                   clinic.is_active === false ||
+                   clinic.subscription_status === 'none')
 
               if (isBlocked) {
                 return NextResponse.redirect(new URL('/payment-required', request.url))
               }
-              // subscription_status = 'trial' (non expiré) ou 'active' → laisser passer
+              // subscription valide ou inconnue → laisser passer
             }
           }
           // Pas de clinic ou colonnes manquantes → laisser dashboard/page.tsx gérer

@@ -38,7 +38,7 @@ export default function DashboardPage() {
         try {
           const { data: member } = await supabase
             .from('clinic_members')
-            .select('clinic_id')
+            .select('clinic_id, role')
             .eq('user_id', user.id)
             .single()
 
@@ -55,15 +55,25 @@ export default function DashboardPage() {
                 clinic.subscription_status === 'trial' &&
                 clinic.trial_end != null &&
                 new Date(clinic.trial_end) < now
-              const isBlocked =
-                trialExpired ||
-                clinic.subscription_status === 'expired' ||
-                clinic.subscription_status === 'cancelled' ||
-                clinic.is_active === false ||
-                clinic.subscription_status === 'none'
+
+              // Staff (non-propriétaire) : 'none'/null/inconnu → autoriser.
+              // Seuls expired / cancelled / is_active=false bloquent.
+              const isStaffMember =
+                member.role !== 'proprietaire' && member.role !== 'owner'
+
+              const isBlocked = isStaffMember
+                ? (trialExpired ||
+                   clinic.subscription_status === 'expired' ||
+                   clinic.subscription_status === 'cancelled' ||
+                   clinic.is_active === false)
+                : (trialExpired ||
+                   clinic.subscription_status === 'expired' ||
+                   clinic.subscription_status === 'cancelled' ||
+                   clinic.is_active === false ||
+                   clinic.subscription_status === 'none')
 
               if (!isBlocked) {
-                // Clinique active → autoriser l'accès
+                // Clinique valide → autoriser l'accès
                 setLoading(false)
                 return
               }
