@@ -78,15 +78,32 @@ export default function PaymentRequiredPage() {
 
       await supabase.from('profiles').update({ clinic_id: clinic.id }).eq('id', user.id)
 
-      const { error: memberErr } = await supabase.from('clinic_members').upsert({
-        user_id: user.id,
-        clinic_id: clinic.id,
-        role: 'veterinaire',
-        has_paid: false,
-      }, { onConflict: 'user_id' })
+      // Vérifier si une ligne clinic_members existe déjà pour cet utilisateur
+      const { data: existingMember } = await supabase
+        .from('clinic_members')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      let memberErr: { message: string } | null = null
+
+      if (existingMember) {
+        // Mettre à jour la ligne existante
+        const { error } = await supabase
+          .from('clinic_members')
+          .update({ clinic_id: clinic.id, role: 'veterinaire' })
+          .eq('id', existingMember.id)
+        memberErr = error
+      } else {
+        // Créer une nouvelle ligne
+        const { error } = await supabase
+          .from('clinic_members')
+          .insert({ user_id: user.id, clinic_id: clinic.id, role: 'veterinaire' })
+        memberErr = error
+      }
 
       if (memberErr) {
-        setJoinError('Erreur lors de l\'association à la clinique.')
+        setJoinError(`Erreur : ${memberErr.message}`)
         setJoinLoading(false)
         return
       }

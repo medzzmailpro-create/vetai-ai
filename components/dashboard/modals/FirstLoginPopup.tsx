@@ -207,7 +207,7 @@ export default function FirstLoginPopup({ userId, userEmail, onComplete }: Props
       await supabase.from('clinic_members').upsert({
         user_id: userId,
         clinic_id: clinic.id,
-        role: 'owner',
+        role: 'proprietaire',
       }, { onConflict: 'user_id,clinic_id' }).select()
 
       // Insert 4 default AI agents for this clinic
