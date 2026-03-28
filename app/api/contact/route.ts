@@ -54,9 +54,9 @@ export async function POST(req: NextRequest) {
     status: 'open',
   })
 
-  // Notification email via Resend (optionnel)
-  const notifyEmail = process.env.CONTACT_NOTIFY_EMAIL
-  if (notifyEmail && process.env.RESEND_API_KEY) {
+  // Notification email via Resend — toujours vers contact@vetai.fr
+  const notifyEmail = process.env.CONTACT_NOTIFY_EMAIL ?? 'contact@vetai.fr'
+  if (process.env.RESEND_API_KEY) {
     try {
       await fetch('https://api.resend.com/emails', {
         method: 'POST',

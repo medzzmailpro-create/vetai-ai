@@ -49,7 +49,7 @@ export async function POST(req: Request) {
 
         if (userId) {
           // Update clinic_members
-          const { error: memberError } = await supabase
+          await supabase
             .from('clinic_members')
             .update({
               has_paid: true,
@@ -58,19 +58,60 @@ export async function POST(req: Request) {
             })
             .eq('user_id', userId)
 
-          if (memberError) {
-            console.error('Supabase clinic_members update error:', memberError)
-          }
-
-          // Also update profiles.has_paid — dashboard checks this
-          const { error: profileError } = await supabase
+          // Update profiles.has_paid — dashboard checks this
+          await supabase
             .from('profiles')
             .update({ has_paid: true })
             .eq('id', userId)
 
-          if (profileError) {
-            console.error('Supabase profiles update error:', profileError)
-            return new Response('Database update failed', { status: 500 })
+          // Update clinics.subscription_status → 'active'
+          const { data: member } = await supabase
+            .from('clinic_members')
+            .select('clinic_id')
+            .eq('user_id', userId)
+            .single()
+
+          if (member?.clinic_id) {
+            await supabase
+              .from('clinics')
+              .update({
+                subscription_status: 'active',
+                is_active: true,
+                ...(customerId ? { stripe_customer_id: customerId } : {}),
+                ...(subscriptionId ? { stripe_subscription_id: subscriptionId } : {}),
+              })
+              .eq('id', member.clinic_id)
+          }
+        }
+
+        break
+      }
+
+      case 'invoice.paid': {
+        // Renouvellement mensuel réussi → confirmer que la clinique reste active
+        const invoice = event.data.object as Stripe.Invoice & { subscription?: string | Stripe.Subscription | null }
+        const subscriptionId =
+          typeof invoice.subscription === 'string' ? invoice.subscription : null
+
+        if (subscriptionId) {
+          const { data: member } = await supabase
+            .from('clinic_members')
+            .select('user_id, clinic_id')
+            .eq('stripe_subscription_id', subscriptionId)
+            .single()
+
+          if (member?.clinic_id) {
+            await supabase
+              .from('clinics')
+              .update({ subscription_status: 'active', is_active: true })
+              .eq('id', member.clinic_id)
+          }
+
+          if (member?.user_id) {
+            await supabase
+              .from('profiles')
+              .update({ has_paid: true })
+              .eq('id', member.user_id)
           }
         }
 
@@ -91,15 +132,17 @@ export async function POST(req: Request) {
           const clinicId = ownerMember.clinic_id as string | null
 
           if (clinicId) {
+            // Désactiver la clinique
+            await supabase
+              .from('clinics')
+              .update({ subscription_status: 'cancelled', is_active: false })
+              .eq('id', clinicId)
+
             // Disable ALL members of this clinic in clinic_members
-            const { error: membersError } = await supabase
+            await supabase
               .from('clinic_members')
               .update({ has_paid: false })
               .eq('clinic_id', clinicId)
-
-            if (membersError) {
-              console.error('Supabase clinic_members cascade error:', membersError)
-            }
 
             // Get all user_ids of this clinic to update profiles
             const { data: allMembers } = await supabase
@@ -109,15 +152,10 @@ export async function POST(req: Request) {
 
             if (allMembers && allMembers.length > 0) {
               const memberUserIds = allMembers.map((m: { user_id: string }) => m.user_id)
-
-              const { error: profilesError } = await supabase
+              await supabase
                 .from('profiles')
                 .update({ has_paid: false })
                 .in('id', memberUserIds)
-
-              if (profilesError) {
-                console.error('Supabase profiles cascade error:', profilesError)
-              }
             }
           } else {
             // No clinic_id on member row — just disable the owner
@@ -132,16 +170,11 @@ export async function POST(req: Request) {
               .eq('id', ownerMember.user_id)
           }
         } else {
-          // Fallback: match only by stripe_subscription_id on clinic_members
-          const { error } = await supabase
+          // Fallback: match only by stripe_subscription_id
+          await supabase
             .from('clinic_members')
             .update({ has_paid: false })
             .eq('stripe_subscription_id', subscription.id)
-
-          if (error) {
-            console.error('Supabase cancel error:', error)
-            return new Response('Database update failed', { status: 500 })
-          }
         }
 
         break
@@ -153,24 +186,24 @@ export async function POST(req: Request) {
           typeof invoice.subscription === 'string' ? invoice.subscription : null
 
         if (subscriptionId) {
-          // Find member by subscription id
           const { data: failedMember } = await supabase
             .from('clinic_members')
-            .select('user_id')
+            .select('user_id, clinic_id')
             .eq('stripe_subscription_id', subscriptionId)
             .single()
 
-          const { error } = await supabase
+          await supabase
             .from('clinic_members')
             .update({ has_paid: false })
             .eq('stripe_subscription_id', subscriptionId)
 
-          if (error) {
-            console.error('Supabase invoice error:', error)
-            return new Response('Database update failed', { status: 500 })
+          if (failedMember?.clinic_id) {
+            await supabase
+              .from('clinics')
+              .update({ subscription_status: 'expired', is_active: false })
+              .eq('id', failedMember.clinic_id)
           }
 
-          // Also update profiles
           if (failedMember?.user_id) {
             await supabase
               .from('profiles')

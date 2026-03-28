@@ -240,6 +240,83 @@ SELECT user_id, clinic_id, role, has_paid FROM clinic_members LIMIT 10;
 
 ---
 
+### Migration 8 — Système de trial dans `clinics` (28/03/2026)
+
+Ajoute les colonnes nécessaires pour gérer la période d'essai et le statut d'abonnement par clinique.
+
+**SQL à exécuter dans Supabase Dashboard → SQL Editor :**
+```sql
+-- ============================================
+-- MIGRATION 8 — Système de trial dans clinics
+-- Date : 28/03/2026
+-- But : Gérer trial, expiration et statut d'abonnement
+-- ============================================
+
+ALTER TABLE clinics ADD COLUMN IF NOT EXISTS trial_start TIMESTAMPTZ DEFAULT NULL;
+ALTER TABLE clinics ADD COLUMN IF NOT EXISTS trial_end TIMESTAMPTZ DEFAULT NULL;
+ALTER TABLE clinics ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+ALTER TABLE clinics ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'none'
+  CHECK (subscription_status IN ('none', 'trial', 'active', 'expired', 'cancelled'));
+
+-- Mettre à jour les cliniques existantes qui ont déjà un abonnement actif Stripe
+-- UPDATE clinics SET subscription_status = 'active', is_active = true
+-- WHERE id IN (SELECT DISTINCT clinic_id FROM clinic_members WHERE has_paid = true);
+
+-- Vérification
+SELECT id, name, subscription_status, is_active, trial_start, trial_end FROM clinics LIMIT 10;
+```
+
+**Pour activer une démo de 14 jours pour une clinique (remplacer `<clinic_id>`) :**
+```sql
+UPDATE clinics
+SET trial_start = NOW(),
+    trial_end = NOW() + INTERVAL '14 days',
+    subscription_status = 'trial',
+    is_active = true
+WHERE id = '<clinic_id>';
+```
+
+**Checklist post-migration :**
+- [ ] SQL exécuté dans Supabase SQL Editor
+- [ ] Vérifier Table Editor → clinics → colonnes visibles
+- [ ] Mettre à jour les cliniques existantes payantes (UPDATE ci-dessus)
+- [ ] Tester : clinique en trial → accès dashboard OK
+- [ ] Tester : trial expiré → redirection /payment-required
+- [ ] Tester : paiement Stripe → subscription_status = 'active'
+
+**Variables d'environnement Vercel à ajouter :**
+```
+NEXT_PUBLIC_STRIPE_URL=https://buy.stripe.com/aFacN4b9adchgqqfKNdnW00
+```
+
+---
+
+### SUPABASE — URL Configuration (mise à jour vetai.fr)
+**Où :** Supabase Dashboard → Authentication → URL Configuration
+**Quoi :**
+1. Site URL = `https://www.vetai.fr`
+2. Redirect URLs (ajouter) :
+   - `https://www.vetai.fr/auth/callback`
+   - `https://www.vetai.fr/dashboard`
+3. Cliquer **Save**
+
+**Pourquoi :** Les emails de confirmation Supabase utilisent `{{ .SiteURL }}` — il doit pointer vers vetai.fr.
+
+---
+
+### SUPABASE — Email Templates
+**Où :** Supabase Dashboard → Authentication → Email Templates
+**Quoi :** Vérifier que les liens dans les templates utilisent `{{ .SiteURL }}` (pas localhost).
+
+---
+
+### STRIPE — Ajouter les événements webhook `invoice.paid`
+**Où :** Stripe Dashboard → Developers → Webhooks → votre endpoint
+**Quoi :** Ajouter l'événement `invoice.paid` à la liste des événements écoutés.
+Ce nouvel événement confirme les renouvellements mensuels réussis.
+
+---
+
 ## 🟡 IMPORTANT — APIs Externes
 
 ### RETELL AI

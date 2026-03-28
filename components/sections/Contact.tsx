@@ -5,7 +5,7 @@ import { CONTACT_EMAIL } from '@/lib/data'
 
 export default function Contact() {
   const ref = useScrollAnimation()
-  const [form, setForm] = useState({ prenom: '', nom: '', email: '', clinique: '', tel: '', offre: 'Pack Clinique — Offre lancement', message: '' })
+  const [form, setForm] = useState({ prenom: '', nom: '', email: '', clinique: '', tel: '', offre: 'La Sentinelle', message: '' })
   const [error, setError] = useState('')
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -49,8 +49,7 @@ export default function Contact() {
               ['✓', 'Réponse sous 24h garantie'],
               ['✓', 'Sans engagement, sans CB'],
               ['✓', 'Équipe basée en France 🇫🇷'],
-              ['🛡️', 'Satisfait ou remboursé 14 jours'],
-              ['💳', 'Paiement en 3 fois sans frais disponible'],
+              ['🎁', 'Démo gratuite de 14 jours — sans engagement, sans carte bancaire'],
             ].map(([icon, text]) => (
               <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ width: 24, height: 24, background: '#E8F5F3', color: '#0A7C6E', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{icon}</div>
@@ -94,9 +93,7 @@ export default function Contact() {
                 <div style={{ marginBottom: 16 }}>
                   <label style={{ fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 600, color: '#3E3E3C', display: 'block', marginBottom: 6 }}>Offre qui vous intéresse</label>
                   <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.offre} onChange={e => setForm({ ...form, offre: e.target.value })}>
-                    <option>Pack Clinique — Offre lancement</option>
-                    <option>Pack Clinique — Tarif standard</option>
-                    <option>Je veux d'abord en savoir plus</option>
+                    <option>La Sentinelle</option>
                   </select>
                 </div>
                 <div style={{ marginBottom: 16 }}>

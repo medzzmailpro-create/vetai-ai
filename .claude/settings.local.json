@@ -60,7 +60,15 @@
       "Bash(npx --prefix /d/SaaS/zip/cliniko tsc --noEmit)",
       "Bash(npm run:*)",
       "Bash(xargs sed:*)",
-      "Bash(grep -r medzz.mailpro --include=*.tsx --include=*.ts --include=*.jsx --include=*.js --include=*.json .)"
+      "Bash(grep -r medzz.mailpro --include=*.tsx --include=*.ts --include=*.jsx --include=*.js --include=*.json .)",
+      "Bash(grep -r \"localhost:3000\\\\|localhost\" --include=*.ts --include=*.tsx --include=*.js -l /d/SaaS/zip/cliniko)",
+      "Bash(grep -r \"Satisfait ou remboursé\\\\|remboursé 14\\\\|Paiement en 3 fois\\\\|3 fois sans frais\\\\|sans frais\" --include=*.tsx --include=*.ts /d/SaaS/zip/cliniko)",
+      "Bash(grep -r \"Envoyer ma demande\\\\|Offre qui vous\\\\|contact.*form\\\\|handleSubmit\" --include=*.tsx --include=*.ts /d/SaaS/zip/cliniko)",
+      "Bash(grep -rn clinicsb --include=*.ts --include=*.tsx /d/SaaS/zip/cliniko)",
+      "Bash(grep -r localhost:3000 --include=*.ts --include=*.tsx --include=*.js /d/SaaS/zip/cliniko)",
+      "Bash(grep -rn \"emailRedirectTo\\\\|NEXT_PUBLIC_APP_URL\" --include=*.ts --include=*.tsx /d/SaaS/zip/cliniko)",
+      "Bash(grep -rn \"FAQ\\\\|data.ts\" --include=*.tsx /d/SaaS/zip/cliniko)",
+      "Bash(grep -v .next grep -r medzz.mailpro --include=*.ts --include=*.tsx --include=*.js --include=*.json /d/SaaS/zip/cliniko)"
     ]
   }
 }

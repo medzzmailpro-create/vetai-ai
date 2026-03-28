@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+
+const STRIPE_URL = process.env.NEXT_PUBLIC_STRIPE_URL ?? 'https://buy.stripe.com/aFacN4b9adchgqqfKNdnW00'
 
 const inputStyle = {
   padding: '10px 14px',
@@ -23,10 +25,25 @@ export default function PaymentRequiredPage() {
   const [joinLoading, setJoinLoading] = useState(false)
   const [joinError, setJoinError] = useState('')
   const [joinSuccess, setJoinSuccess] = useState('')
+  const [isOwner, setIsOwner] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    const checkRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data: member } = await supabase
+        .from('clinic_members')
+        .select('role')
+        .eq('user_id', user.id)
+        .single()
+      setIsOwner(!member || member.role === 'owner')
+    }
+    checkRole()
+  }, [])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    router.push('/')
+    router.push('/login')
   }
 
   const handleJoinClinic = async () => {
@@ -44,12 +61,18 @@ export default function PaymentRequiredPage() {
 
       const { data: clinic, error: clinicErr } = await supabase
         .from('clinics')
-        .select('id, name')
+        .select('id, name, is_active, subscription_status')
         .eq('id', clinicIdInput.trim())
         .single()
 
       if (clinicErr || !clinic) {
         setJoinError('Aucune clinique trouvée avec cet identifiant. Vérifiez l\'ID.')
+        setJoinLoading(false)
+        return
+      }
+
+      if (clinic.is_active === false || clinic.subscription_status === 'expired' || clinic.subscription_status === 'cancelled') {
+        setJoinError('Cette clinique n\'a pas d\'abonnement actif. Contactez le responsable.')
         setJoinLoading(false)
         return
       }
@@ -106,73 +129,80 @@ export default function PaymentRequiredPage() {
 
         <div style={{ fontSize: 48, marginBottom: 20 }}>🔒</div>
 
-        <div style={{
-          fontFamily: 'Syne, sans-serif', fontSize: 22, fontWeight: 800,
-          color: '#141412', marginBottom: 12, letterSpacing: '-0.01em',
-        }}>
-          Accès non activé
-        </div>
-
-        <p style={{ fontSize: 15, color: '#5C5C59', lineHeight: 1.7, marginBottom: 32 }}>
-          Votre accès n&apos;est pas encore activé.<br />
-          Souscrivez un abonnement ou rejoignez une clinique existante.
-        </p>
-
         {!showJoinModal ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <a
-              href="/pricing"
-              style={{
-                display: 'block', padding: '14px 24px',
-                background: 'linear-gradient(135deg, #0A7C6E 0%, #0D9E8D 100%)',
-                color: 'white', textDecoration: 'none', borderRadius: 10,
-                fontFamily: 'Syne, sans-serif', fontSize: 15, fontWeight: 700,
-                boxShadow: '0 4px 16px rgba(10,124,110,0.3)',
-              }}
-            >
-              Activer mon abonnement →
-            </a>
+          <>
+            <div style={{
+              fontFamily: 'Syne, sans-serif', fontSize: 22, fontWeight: 800,
+              color: '#141412', marginBottom: 12, letterSpacing: '-0.01em',
+            }}>
+              {isOwner === false
+                ? 'L\'abonnement de votre clinique a expiré'
+                : 'Votre période d\'essai est terminée'}
+            </div>
 
-            <button
-              onClick={() => setShowJoinModal(true)}
-              style={{
-                display: 'block', padding: '14px 24px', width: '100%',
-                background: 'white', color: '#0A7C6E',
-                border: '1.5px solid #0A7C6E', borderRadius: 10,
-                fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              👥 Rejoindre une clinique
-            </button>
+            <p style={{ fontSize: 15, color: '#5C5C59', lineHeight: 1.7, marginBottom: 32 }}>
+              {isOwner === false
+                ? 'Contactez le responsable de votre clinique pour réactiver l\'accès.'
+                : 'Pour continuer à utiliser Vetai et ses agents IA, activez votre abonnement.'}
+            </p>
 
-            <a
-              href="mailto:contact@vetai.fr"
-              style={{
-                display: 'block', padding: '12px 24px',
-                background: 'transparent', color: '#9E9E9B',
-                border: '1.5px solid #EBEBEA',
-                textDecoration: 'none', borderRadius: 10,
-                fontFamily: 'DM Sans, sans-serif', fontSize: 14, fontWeight: 500,
-              }}
-            >
-              Contacter le support
-            </a>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {isOwner !== false && (
+                <a
+                  href={STRIPE_URL}
+                  style={{
+                    display: 'block', padding: '14px 24px',
+                    background: 'linear-gradient(135deg, #0A7C6E 0%, #0D9E8D 100%)',
+                    color: 'white', textDecoration: 'none', borderRadius: 10,
+                    fontFamily: 'Syne, sans-serif', fontSize: 15, fontWeight: 700,
+                    boxShadow: '0 4px 16px rgba(10,124,110,0.3)',
+                  }}
+                >
+                  Activer La Sentinelle — 249€ HT/mois →
+                </a>
+              )}
 
-            <button
-              onClick={handleLogout}
-              style={{
-                padding: '10px 24px', background: 'none', border: 'none',
-                fontSize: 13, color: '#9E9E9B', cursor: 'pointer',
-                fontFamily: 'DM Sans, sans-serif',
-              }}
-            >
-              Se déconnecter
-            </button>
-          </div>
+              <button
+                onClick={() => setShowJoinModal(true)}
+                style={{
+                  display: 'block', padding: '14px 24px', width: '100%',
+                  background: 'white', color: '#0A7C6E',
+                  border: '1.5px solid #0A7C6E', borderRadius: 10,
+                  fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                👥 Rejoindre une clinique
+              </button>
+
+              <a
+                href="/support"
+                style={{
+                  display: 'block', padding: '12px 24px',
+                  background: 'transparent', color: '#9E9E9B',
+                  border: '1.5px solid #EBEBEA',
+                  textDecoration: 'none', borderRadius: 10,
+                  fontFamily: 'DM Sans, sans-serif', fontSize: 14, fontWeight: 500,
+                }}
+              >
+                Contacter le support
+              </a>
+
+              <button
+                onClick={handleLogout}
+                style={{
+                  padding: '10px 24px', background: 'none', border: 'none',
+                  fontSize: 13, color: '#9E9E9B', cursor: 'pointer',
+                  fontFamily: 'DM Sans, sans-serif',
+                }}
+              >
+                Se déconnecter
+              </button>
+            </div>
+          </>
         ) : (
           <div>
-            <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 16, fontWeight: 700, color: '#2A2A28', marginBottom: 8 }}>
+            <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 22, fontWeight: 800, color: '#141412', marginBottom: 12, letterSpacing: '-0.01em' }}>
               Rejoindre une clinique
             </div>
             <p style={{ fontSize: 13, color: '#9E9E9B', marginBottom: 16 }}>

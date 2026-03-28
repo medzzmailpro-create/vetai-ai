@@ -71,30 +71,13 @@ export default function RegisterPage() {
       return
     }
 
-    // Si plan=sentinelle et user créé → rediriger vers Stripe Checkout
+    // Si plan=sentinelle et user créé → rediriger vers Stripe (lien direct)
     if (plan === 'sentinelle' && data?.user) {
       setLoading(false)
       setStripeLoading(true)
-      try {
-        const res = await fetch('/api/stripe/create-checkout-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: data.user.id,
-            email: email.trim().toLowerCase(),
-          }),
-        })
-        const checkout = await res.json()
-        if (checkout.url) {
-          window.location.href = checkout.url
-          return
-        }
-        // Si l'API Stripe échoue → afficher l'écran de vérification email en fallback
-        console.error('Stripe checkout error:', checkout.error)
-      } catch (err) {
-        console.error('Erreur réseau Stripe:', err)
-      }
-      setStripeLoading(false)
+      const stripeUrl = process.env.NEXT_PUBLIC_STRIPE_URL ?? 'https://buy.stripe.com/aFacN4b9adchgqqfKNdnW00'
+      window.location.href = stripeUrl
+      return
     } else {
       setLoading(false)
     }

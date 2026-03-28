@@ -71,15 +71,15 @@ export function Garantie() {
   return (
     <section id="garantie" style={{ background: '#141412', padding: '56px 24px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
       <div style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center' }}>
-        <div style={{ fontSize: 48, marginBottom: 16 }}>🛡️</div>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>🎁</div>
         <h2 style={{ fontFamily: 'Syne, sans-serif', fontSize: 26, fontWeight: 800, color: 'white', marginBottom: 12 }}>
-          Satisfait ou remboursé — 14 jours
+          Démo gratuite de 14 jours
         </h2>
         <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 16, lineHeight: 1.7, marginBottom: 24 }}>
-          Si Vetai ne répond pas à vos attentes dans les 14 premiers jours suivant l'activation, nous vous remboursons intégralement les frais d'installation. Sans question.
+          Sans engagement, sans carte bancaire. Testez Vetai pendant 14 jours dans votre clinique et voyez les résultats par vous-même.
         </p>
         <a href="#contact" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '15px 32px', background: '#F5A623', color: '#1a1a18', borderRadius: 8, fontFamily: 'Syne, sans-serif', fontWeight: 600, textDecoration: 'none', fontSize: 16 }}>
-          Démarrer sans risque →
+          Démarrer gratuitement →
         </a>
       </div>
     </section>

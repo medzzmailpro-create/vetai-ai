@@ -108,27 +108,35 @@ export default function Pricing() {
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [checkoutError, setCheckoutError] = useState('')
 
+  const STRIPE_URL = process.env.NEXT_PUBLIC_STRIPE_URL ?? 'https://buy.stripe.com/aFacN4b9adchgqqfKNdnW00'
+
   const handleCheckout = async () => {
     setCheckoutError('')
     const { data: { user } } = await supabase.auth.getUser()
+
+    // Pas connecté → inscription
     if (!user) {
       router.push('/register?plan=sentinelle')
       return
     }
+
     setCheckoutLoading(true)
     try {
-      const res = await fetch('/api/stripe/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id }),
-      })
-      const data = await res.json()
-      if (data.url) {
-        window.location.href = data.url
-      } else {
-        setCheckoutError(data.error ?? 'Erreur lors de la redirection vers le paiement.')
-        setCheckoutLoading(false)
+      // Connecté → vérifier si déjà payé
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('has_paid')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.has_paid) {
+        // Déjà abonné → dashboard
+        router.push('/dashboard')
+        return
       }
+
+      // Pas encore payé → Stripe Checkout
+      window.location.href = STRIPE_URL
     } catch {
       setCheckoutError('Erreur réseau. Veuillez réessayer.')
       setCheckoutLoading(false)
@@ -245,7 +253,7 @@ export default function Pricing() {
               <strong style={{ fontFamily: 'Syne, sans-serif' }}>
                 Votre clinique répond à chaque appel, chaque message, chaque urgence — 24h/24, 7j/7 — sans recruter un seul employé supplémentaire.
               </strong>
-              {' '}Résultat garanti ou remboursé.
+              {' '}Démo gratuite de 14 jours — sans engagement, sans carte bancaire.
             </p>
           </div>
 
@@ -521,7 +529,7 @@ export default function Pricing() {
             )}
 
             <p style={{ textAlign: 'center', fontSize: 12, color: '#9E9E9B', marginTop: 10 }}>
-              ⚡ Opérationnel en 48h · Formation incluse · Sans engagement · Garanti 30 jours
+              ⚡ Opérationnel en 48h · Formation incluse · Sans engagement · Démo gratuite 14 jours
             </p>
 
             {/* Badges confiance */}

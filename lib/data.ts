@@ -127,11 +127,11 @@ export const FAQ = [
   },
   {
     q: 'Pourquoi 6 mois d\'engagement ?',
-    a: 'L\'engagement de 6 mois est nécessaire pour que les agents IA soient pleinement optimisés pour votre clinique. L\'IA a besoin de ce temps pour apprendre vos spécificités — protocoles, horaires, cas récurrents. Après 6 mois, vous continuez mois par mois avec 30 jours de préavis. Et vous bénéficiez d\'une garantie satisfait ou remboursé de 14 jours dès l\'activation.',
+    a: 'L\'engagement de 6 mois est nécessaire pour que les agents IA soient pleinement optimisés pour votre clinique. L\'IA a besoin de ce temps pour apprendre vos spécificités — protocoles, horaires, cas récurrents. Après 6 mois, vous continuez mois par mois avec 30 jours de préavis.',
   },
   {
-    q: 'Peut-on payer l\'installation en plusieurs fois ?',
-    a: 'Oui, tous nos plans proposent un paiement en 3 fois sans frais. Starter : 3 × 830 €. Pro : 3 × 1 163 €. Enterprise : 3 × 1 997 €. Il suffit de le préciser lors de votre démo.',
+    q: 'Comment fonctionne la démo gratuite de 14 jours ?',
+    a: 'Vous testez Vetai pendant 14 jours dans votre clinique, sans carte bancaire et sans engagement. Notre équipe installe et configure tout. Si vous décidez de continuer, vous activez votre abonnement. Sinon, on arrête — sans friction.',
   },
 ]
 
