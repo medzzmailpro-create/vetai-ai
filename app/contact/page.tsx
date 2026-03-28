@@ -121,10 +121,10 @@ export default function ContactPage() {
               Email direct
             </div>
             <a
-              href="mailto:medzz.mailpro@gmail.com"
+              href="mailto:contact@vetai.fr"
               style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 15, fontWeight: 600, color: '#0A7C6E', textDecoration: 'none' }}
             >
-              medzz.mailpro@gmail.com
+              contact@vetai.fr
             </a>
           </div>
         </div>

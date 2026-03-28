@@ -436,8 +436,8 @@ export default function ConfigurationPage({ config, onConfigChange, userId }: Pr
               {' '}pour configurer vos clés.
               <br />
               Si vous n&apos;avez pas encore de clés, contactez-nous :{' '}
-              <a href="mailto:medzz.mailpro@gmail.com" style={{ color: '#C53030', fontWeight: 700, textDecoration: 'underline' }}>
-                medzz.mailpro@gmail.com
+              <a href="mailto:contact@vetai.fr" style={{ color: '#C53030', fontWeight: 700, textDecoration: 'underline' }}>
+                contact@vetai.fr
               </a>
             </div>
           </div>

@@ -1,4 +1,4 @@
-export const CONTACT_EMAIL = 'medzz.mailpro@gmail.com'
+export const CONTACT_EMAIL = 'contact@vetai.fr'
 
 export const AGENTS = [
   { emoji: '🤙', title: 'Agent Téléphone', desc: 'Répond, informe et prend rendez-vous 24h/24. Aucun appel ne reste sans réponse, même la nuit et le week-end.' },

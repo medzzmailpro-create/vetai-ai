@@ -37,7 +37,7 @@ const sections = [
   {
     title: '4. Garantie satisfait ou remboursé',
     content:
-      "Vetai offre une garantie satisfait ou remboursé de 14 jours à compter de la date d'activation du compte. Aucune question ne sera posée. La demande de remboursement doit être adressée par email à medzz.mailpro@gmail.com dans ce délai.",
+      "Vetai offre une garantie satisfait ou remboursé de 14 jours à compter de la date d'activation du compte. Aucune question ne sera posée. La demande de remboursement doit être adressée par email à contact@vetai.fr dans ce délai.",
   },
   {
     title: '5. Limitations de responsabilité',
@@ -54,7 +54,7 @@ const sections = [
     content: (
       <ul style={{ margin: 0, paddingLeft: 20, lineHeight: 2 }}>
         <li>La résiliation est possible après la période d&apos;engagement initiale de 6 mois.</li>
-        <li>Un préavis de 30 jours doit être respecté, envoyé par email à medzz.mailpro@gmail.com.</li>
+        <li>Un préavis de 30 jours doit être respecté, envoyé par email à contact@vetai.fr.</li>
         <li>En cas de résiliation, les données sont conservées 30 jours avant suppression définitive.</li>
         <li>Vetai peut résilier le contrat sans préavis en cas de violation grave des présentes CGU.</li>
       </ul>
@@ -70,8 +70,8 @@ const sections = [
     content: (
       <>
         Pour toute question relative aux présentes CGU/CGV :{' '}
-        <a href="mailto:medzz.mailpro@gmail.com" style={{ color: '#0A7C6E', textDecoration: 'none', fontWeight: 600 }}>
-          medzz.mailpro@gmail.com
+        <a href="mailto:contact@vetai.fr" style={{ color: '#0A7C6E', textDecoration: 'none', fontWeight: 600 }}>
+          contact@vetai.fr
         </a>
       </>
     ),

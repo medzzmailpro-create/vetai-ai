@@ -276,7 +276,7 @@ export default function SettingsPage({ userId, userRole, clinicConfig, onConfigC
             {/* Support email */}
             <div style={{ background: '#E8F5F3', borderRadius: 8, padding: '12px 16px' }}>
               <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, color: '#0A7C6E', marginBottom: 4 }}>📧 Support direct</div>
-              <div style={{ fontSize: 13, color: '#3E3E3C' }}>medzz.mailpro@gmail.com</div>
+              <div style={{ fontSize: 13, color: '#3E3E3C' }}>contact@vetai.fr</div>
               <div style={{ fontSize: 11, color: '#9E9E9B', marginTop: 4 }}>⏱ Temps de réponse moyen : moins de 24h</div>
             </div>
           </div>

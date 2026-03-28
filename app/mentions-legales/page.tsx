@@ -7,8 +7,8 @@ const sections = [
       <>
         Ce site est édité par [À COMPLÉTER — votre nom/société, adresse, SIRET].<br />
         Contact :{' '}
-        <a href="mailto:medzz.mailpro@gmail.com" style={{ color: '#0A7C6E', textDecoration: 'none', fontWeight: 600 }}>
-          medzz.mailpro@gmail.com
+        <a href="mailto:contact@vetai.fr" style={{ color: '#0A7C6E', textDecoration: 'none', fontWeight: 600 }}>
+          contact@vetai.fr
         </a>
       </>
     ),
@@ -38,8 +38,8 @@ const sections = [
     content: (
       <>
         Conformément au RGPD, vous disposez d&apos;un droit d&apos;accès, de rectification et de suppression de vos données personnelles. Pour exercer ces droits :{' '}
-        <a href="mailto:medzz.mailpro@gmail.com" style={{ color: '#0A7C6E', textDecoration: 'none', fontWeight: 600 }}>
-          medzz.mailpro@gmail.com
+        <a href="mailto:contact@vetai.fr" style={{ color: '#0A7C6E', textDecoration: 'none', fontWeight: 600 }}>
+          contact@vetai.fr
         </a>
       </>
     ),

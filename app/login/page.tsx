@@ -203,7 +203,7 @@ export default function LoginPage() {
               Complétez votre abonnement sur la{' '}
               <a href="/pricing" style={{ color: '#C53030', fontWeight: 700 }}>page tarifs</a>
               {' '}ou{' '}
-              <a href="mailto:medzz.mailpro@gmail.com" style={{ color: '#C53030', fontWeight: 700 }}>contactez le support</a>
+              <a href="mailto:contact@vetai.fr" style={{ color: '#C53030', fontWeight: 700 }}>contactez le support</a>
               {' '}si vous pensez que c&apos;est une erreur.
             </div>
           )}

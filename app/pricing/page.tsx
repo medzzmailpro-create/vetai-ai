@@ -549,7 +549,7 @@ export default function Pricing() {
             marginTop: 40, display: 'flex', justifyContent: 'center', alignItems: 'center',
             gap: 6, flexWrap: 'wrap',
           }}>
-            {['🏥 Déjà utilisé par des cliniques vétérinaires en France', '⚡ Opérationnel en 48h', '🇫🇷 Support français'].map((item, i) => (
+            {['🏥 Conçu pour les cliniques vétérinaires françaises', '⚡ Opérationnel en 48h', '🇫🇷 Support français'].map((item, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {i > 0 && <span style={{ color: '#D4D4D2', fontSize: 14 }}>·</span>}
                 <span style={{ fontSize: 13, color: '#5C5C59', fontWeight: 500 }}>{item}</span>

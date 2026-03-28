@@ -121,7 +121,7 @@ export default function ActivatePage() {
 
             <div style={{ marginTop: 16, padding: '12px 16px', background: '#FEF7E8', borderRadius: 8, border: '1px solid rgba(245,166,35,0.3)' }}>
               <div style={{ fontSize: 12, color: '#92590A', lineHeight: 1.5 }}>
-                💡 Votre clé d&apos;activation vous a été envoyée par email après votre souscription. Contactez <a href="mailto:medzz.mailpro@gmail.com" style={{ color: '#0A7C6E', fontWeight: 600 }}>le support</a> si vous ne la trouvez pas.
+                💡 Votre clé d&apos;activation vous a été envoyée par email après votre souscription. Contactez <a href="mailto:contact@vetai.fr" style={{ color: '#0A7C6E', fontWeight: 600 }}>le support</a> si vous ne la trouvez pas.
               </div>
             </div>
           </>

@@ -26,10 +26,10 @@ const sections = [
       <>
         Vous pouvez demander l&apos;accès, la rectification ou la suppression de vos données à tout moment en écrivant à{' '}
         <a
-          href="mailto:medzz.mailpro@gmail.com"
+          href="mailto:contact@vetai.fr"
           style={{ color: '#0A7C6E', textDecoration: 'none', fontWeight: 600 }}
         >
-          medzz.mailpro@gmail.com
+          contact@vetai.fr
         </a>
       </>
     ),
@@ -159,8 +159,8 @@ export default function SecurityRgpdPage() {
               RGPD &amp; Accord de Traitement des Données
             </Link>{' '}
             ou écrivez-nous à{' '}
-            <a href="mailto:medzz.mailpro@gmail.com" style={{ color: '#0A7C6E', textDecoration: 'none', fontWeight: 600 }}>
-              medzz.mailpro@gmail.com
+            <a href="mailto:contact@vetai.fr" style={{ color: '#0A7C6E', textDecoration: 'none', fontWeight: 600 }}>
+              contact@vetai.fr
             </a>
           </p>
         </div>

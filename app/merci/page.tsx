@@ -97,8 +97,8 @@ export default function MerciPage() {
         {/* Contact support */}
         <p style={{ fontSize: 13, color: '#9E9E9B', marginTop: 16 }}>
           Une question ? Écrivez-nous à{' '}
-          <a href="mailto:medzz.mailpro@gmail.com" style={{ color: '#0A7C6E', fontWeight: 600, textDecoration: 'none' }}>
-            medzz.mailpro@gmail.com
+          <a href="mailto:contact@vetai.fr" style={{ color: '#0A7C6E', fontWeight: 600, textDecoration: 'none' }}>
+            contact@vetai.fr
           </a>
         </p>
 

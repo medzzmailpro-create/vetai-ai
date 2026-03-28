@@ -163,7 +163,7 @@ export default function RgpdDpaPage() {
             Un DPA signé est fourni à chaque clinique lors de la souscription à Vetai. Pour l&apos;obtenir ou pour toute question relative à la conformité RGPD, contactez-nous :
           </p>
           <a
-            href="mailto:medzz.mailpro@gmail.com"
+            href="mailto:contact@vetai.fr"
             style={{
               display: 'inline-block',
               background: '#0A7C6E',
@@ -176,7 +176,7 @@ export default function RgpdDpaPage() {
               textDecoration: 'none',
             }}
           >
-            medzz.mailpro@gmail.com
+            contact@vetai.fr
           </a>
         </div>
       </main>

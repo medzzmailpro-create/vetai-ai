@@ -147,7 +147,7 @@ export default function PaymentRequiredPage() {
             </button>
 
             <a
-              href="mailto:medzz.mailpro@gmail.com"
+              href="mailto:contact@vetai.fr"
               style={{
                 display: 'block', padding: '12px 24px',
                 background: 'transparent', color: '#9E9E9B',

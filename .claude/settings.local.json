@@ -58,7 +58,9 @@
       "Bash(grep -v \"^$\")",
       "Bash(grep -r \"clinic_agents\\\\|notification_prefs\\\\|clinic_config\" /d/SaaS/zip/cliniko/components/dashboard/pages/*.tsx)",
       "Bash(npx --prefix /d/SaaS/zip/cliniko tsc --noEmit)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(xargs sed:*)",
+      "Bash(grep -r medzz.mailpro --include=*.tsx --include=*.ts --include=*.jsx --include=*.js --include=*.json .)"
     ]
   }
 }

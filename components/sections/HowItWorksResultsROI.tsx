@@ -39,16 +39,16 @@ export function Results() {
   const animated = useRef(false)
 
   useEffect(() => {
-    const section = ref.current
+    const section = document.getElementById('results')
     if (!section) return
     const obs = new IntersectionObserver(entries => {
       entries.forEach(e => {
         if (e.isIntersecting && !animated.current) {
           animated.current = true
           STATS.forEach((stat, i) => {
-            let start: number | null = null
+            let start = -1
             const animate = (ts: number) => {
-              if (!start) start = ts
+              if (start === -1) start = ts
               const progress = Math.min((ts - start) / 1500, 1)
               setVals(prev => { const next = [...prev]; next[i] = Math.floor(progress * stat.target); return next })
               if (progress < 1) requestAnimationFrame(animate)
@@ -57,7 +57,7 @@ export function Results() {
           })
         }
       })
-    }, { threshold: 0.3 })
+    }, { threshold: 0.15 })
     obs.observe(section)
     return () => obs.disconnect()
   }, [])

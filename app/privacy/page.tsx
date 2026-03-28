@@ -51,8 +51,8 @@ const sections = [
         </ul>
         <p style={{ margin: '12px 0 0' }}>
           Pour exercer ces droits :{' '}
-          <a href="mailto:medzz.mailpro@gmail.com" style={{ color: '#0A7C6E', textDecoration: 'none', fontWeight: 600 }}>
-            medzz.mailpro@gmail.com
+          <a href="mailto:contact@vetai.fr" style={{ color: '#0A7C6E', textDecoration: 'none', fontWeight: 600 }}>
+            contact@vetai.fr
           </a>
           . Réponse sous 30 jours.
         </p>
@@ -93,8 +93,8 @@ const sections = [
     content: (
       <>
         Pour toute question relative à la protection de vos données, contactez notre délégué à la protection des données :{' '}
-        <a href="mailto:medzz.mailpro@gmail.com" style={{ color: '#0A7C6E', textDecoration: 'none', fontWeight: 600 }}>
-          medzz.mailpro@gmail.com
+        <a href="mailto:contact@vetai.fr" style={{ color: '#0A7C6E', textDecoration: 'none', fontWeight: 600 }}>
+          contact@vetai.fr
         </a>
       </>
     ),
